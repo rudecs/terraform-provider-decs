@@ -18,8 +18,11 @@ limitations under the License.
 package decs
 
 import (
-		"github.com/hashicorp/terraform/helper/schema"
-		"github.com/hashicorp/terraform/helper/validation"
+
+	// "time"
+
+	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 )
 
 func resourceVmCreate(d *schema.ResourceData, m interface{}) error {
@@ -38,12 +41,28 @@ func resourceVmDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
+func resourceVmExists(d *schema.ResourceData, m interface{}) (bool, error) {
+	// Reminder: according to Terraform rules, this function should not modify ResourceData argument
+	return true, nil
+}
+
 func resourceVm() *schema.Resource {
 	return &schema.Resource {
+		SchemaVersion: 1,
+
 		Create: resourceVmCreate,
 		Read:   resourceVmRead,
 		Update: resourceVmUpdate,
 		Delete: resourceVmDelete,
+		Exists:  resourceVmExists,
+
+		Timeouts: &schema.ResourceTimeout {
+			Create:  &Timeout180s,
+			Read:    &Timeout30s,
+			Update:  &Timeout180s,
+			Delete:  &Timeout60s,
+			Default: &Timeout60s,
+		},
 
 		Schema: map[string]*schema.Schema {
 			"name": {
@@ -82,24 +101,26 @@ func resourceVm() *schema.Resource {
 				Description: "Name of the OS image to base this virtual machine on. This parameter is case sensitive.",
 			},
 
+			/*
 			"boot_disk": {
 				Type:        schema.TypeList,
 				Required:    true,
 				MaxItems:    1,
 				Elem:        &schema.Resource {
-					Schema:  ??,
+					// Schema:  ??,
 				},
-				Description: "Specification for a boot disk on this virtual machine."
+				Description: "Specification for a boot disk on this virtual machine.",
 			},
+			*/
 
 			"networks": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				MaxItems:    12,
 				Elem:        &schema.Resource {
-					Schema:  ??,
+					// Schema:  ??,
 				},
-				Description: "Specification for the networks to connect this virtual machine to."
+				Description: "Specification for the networks to connect this virtual machine to.",
 			},
 			
 			"ssh_key": {
@@ -107,21 +128,21 @@ func resourceVm() *schema.Resource {
 				Optional:    true,
 				MaxItems:    12,
 				Elem:        &schema.Resource {
-					Schema:  ??,
+					// Schema:  ??,
 				},
-				Description: "SSH keys to authorize on this virtual machine."
+				Description: "SSH keys to authorize on this virtual machine.",
 			},
 
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Description of this virtual machine."
+				Description: "Description of this virtual machine.",
 			},
 
-			"id": {
+			"vmid": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Unique ID of this virtual machine. This parameter is assigned by the cloud when the machine is created."
+				Description: "Unique ID of this virtual machine. This parameter is assigned by the cloud when the machine is created.",
 			},
 		},
 	}

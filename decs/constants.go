@@ -15,20 +15,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package decs
 
 import (
-	
-	"github.com/hashicorp/terraform/plugin"
-	"github.com/hashicorp/terraform/terraform"
-
-	"terraform-plugin-decs/decs"
+	"time"
 )
 
-func main() {
-	plugin.Serve(&plugin.ServeOpts{
-		ProviderFunc: func() terraform.ResourceProvider {
-			return decs.Provider()
-		},
-	})
-}
+var Timeout30s = time.Second * 30
+var Timeout60s = time.Second * 60
+var Timeout180s = time.Second * 180

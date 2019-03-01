@@ -23,9 +23,11 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
-	"github.com/hashicorp/terraform/terraform"
+	// "github.com/hashicorp/terraform/terraform"
 
 )
+
+var decsController *ControllerCfg
 
 func Provider() *schema.Provider {
 	return &schema.Provider {
@@ -113,5 +115,9 @@ func stateFuncToLower(argval interface{}) string {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	return nil, nil
+	decsController, err := ControllerConfigure(d)
+	if err != nil {
+		return nil, err
+	}
+	return decsController, nil
 }
