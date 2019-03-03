@@ -29,7 +29,7 @@ var Timeout60s = time.Second * 60
 var Timeout180s = time.Second * 180
 
 //
-// structures related to cloudapi/cloudspaces/list API
+// structures related to /cloudapi/cloudspaces/list API
 //
 type UserAclRecord struct {
 	status string          `json:"status"`
@@ -66,13 +66,10 @@ type CloudspaceRecord struct {
 }
 
 const CloudspacesListAPI = "/restmachine/cloudapi/cloudspaces/list"
-type CloudspaceListResp struct {
-	// Response from /cloudapi/cloudspaces/list API
-	records []CloudspaceRecord
-}
+type CloudspacesListResp []CloudspaceRecord
 
 //
-// structures related to cloudapi/cloudspaces/create API call
+// structures related to /cloudapi/cloudspaces/create API call
 //
 const CloudspacesCreateAPI= "/restmachine/cloudapi/cloudspaces/create"
 type CloudspacesCreateParam struct {
@@ -91,7 +88,7 @@ type CloudspacesCreateParam struct {
 } 
 
 //
-// structures related to cloudapi/cloudspaces/get API call
+// structures related to /cloudapi/cloudspaces/get API call
 //
 type QuotaRecord struct {
 	cpu int                `json:"CU_C"`
@@ -120,7 +117,7 @@ type CloudspacesGetResp struct {
 }
 
 // 
-// structures related to cloudapi/cloudspaces/update API
+// structures related to /cloudapi/cloudspaces/update API
 //
 const CloudspacesUpdateAPI = "/restmachine/cloudapi/cloudspaces/update"
 type CloudspacesUpdateParam struct {
@@ -134,7 +131,7 @@ type CloudspacesUpdateParam struct {
 }
 
 //
-// structures related to cloudapi/machines/create API
+// structures related to /cloudapi/machines/create API
 //
 const MachineCreateAPI = "/restmachine/cloudapi/machines/create"
 type MachineCreateParam struct {
@@ -150,7 +147,7 @@ type MachineCreateParam struct {
 }
 
 // 
-// structures related to cloudapi/machines/list API
+// structures related to /cloudapi/machines/list API
 //
 type NicRecord struct {
 	status string          `json:"status"`
@@ -164,8 +161,7 @@ type NicRecord struct {
 	ip_address string      `json:"ipAddress"`
 }
 
-const MachinesListAPI = "/restmachine/cloudapi/machines/list"
-type MachinesListResp struct {
+type MachineRecord struct {
 	status string          `json:"status"`
 	stack_id int           `json:"stackId"`
 	update_time uint64     `json:"updateTime"`
@@ -173,7 +169,7 @@ type MachinesListResp struct {
 	name string            `json:"name"`
 	nics []NicRecord       `json:"nics"`
 	size_id int            `json:"sizeId"`
-	disks []uint           `json:"disks"`
+	data_disks []uint      `json:"disks"`
 	create_time uint64     `json:"creationTime"`
 	image_id int           `json:"imageId"`
 	boot_disk int          `json:"storage"`
@@ -182,8 +178,52 @@ type MachinesListResp struct {
 	id uint                `json:"id"`
 }
 
+const MachinesListAPI = "/restmachine/cloudapi/machines/list"
+type MachinesListResp []MachineRecord
+
 //
-// structures related to cloudapi/images/list API
+// structures related to /cloudapi/machines/get
+//
+type DataDiskRecord struct {
+	status string          `json:"status"`
+	size_max int           `json:"sizeMax"`
+	label string           `json:"name"`
+	description string     `json:"descr"`
+	acl map[string]string  `json:"acl"`
+	disk_type string       `json:"type"`
+	id uint                `json:"id"`
+}
+
+type GuestLoginRecord struct {
+	guid string            `json:"guid"`
+	login string           `json:"login"`
+	password string        `json:"password"`
+}
+
+const MachinesGetAPI = "/restmachine/cloudapi/machines/get"
+type MachinesGetResp struct {
+	vdc_id uint            `json:"cloudspaceId`
+	status string          `json:"status"`
+	update_time uint64     `json:"updateTime"`
+	hostname string        `json:"hostname"`
+	is_locked bool         `json:"locked"`
+	name string            `json:"name"`
+	create_time uint64     `json:"creationTime"`
+	size_id uint           `json:"sizeid"`
+	cpu int                `json:"vcpus"`
+	ram int                `json:"memory"`
+	boot_disk int          `json:"storage"`
+	data_disks []DiskRecord `json:"disks"`
+	nics []NicRecord       `json:"interfaces"`
+	guest_logins []GuestLoginRecord `json:"accounts"`
+	image_name string      `json:"osImage"`
+	image_id int           `json:"imageid"`
+	description string     `json:"description"`
+	id uint                `json:"id"`
+}
+
+//
+// structures related to /restmachine/cloudapi/images/list API
 //
 type ImagesRecord struct {
 	status string       `json:"status"`
@@ -198,3 +238,28 @@ type ImagesRecord struct {
 
 const ImagesListAPI = "/restmachine/cloudapi/images/list"
 type ImagesListResp []ImageRecord
+
+//
+// structures related to /cloudapi/externalnetwork/list API
+//
+type ExtNetworkRecord struct {
+	ip_range string        `json:"name"`
+	id uint                `json:"id"`
+} 
+
+const  ExtNetworksListAPI = "/restmachine/cloudapi/externalnetwork/list"
+type ExtNetworksResp []ExtNetRecord
+
+//
+// structures related to /cloudapi/accounts/list API
+//
+type TenantRecord struct {
+	id int                 `json:"id"`
+	update_time uint64     `json:"updateTime"`
+	create_time uint64     `json:"creationTime"`
+	name string            `json:"name"`
+	acl []UserAclRecord    `json:"acl"`
+}
+
+const TenantsListAPI = "/restmachine/cloudapi/accounts/list"
+type TenantsListResp []TenantRecord
