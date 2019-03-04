@@ -213,7 +213,7 @@ func (config *ControllerCfg) getOAuth2JWT() (string, error) {
 
 	responseData, err := ioutil.ReadAll(resp.Body)
     if err != nil {
-        log.Fatal(err)
+        return "", err
     }
  
 	// validation successful - store JWT in the corresponding field of the ControllerCfg structure
@@ -246,14 +246,16 @@ func (config *ControllerCfg) validateJWT(jwt string) (bool, error) {
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("bearer %s", jwt))
+	// req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	// req.Header.Set("Content-Length", strconv.Itoa(0))
 	
 	resp, err := config.cc_client.Do(req)	
 	if err != nil {
 		return false, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("validateJWT: unexpected status code %d when validating JWT against %s for APP_ID %s", 
-		resp.StatusCode, config.controller_url, config.app_id)
+		return false, fmt.Errorf("validateJWT: unexpected status code %d when validating JWT against %q.", 
+		resp.StatusCode, req.URL)
 	}
 	defer resp.Body.Close()
 
@@ -292,7 +294,7 @@ func (config *ControllerCfg) validateLegacyUser() (bool, error) {
 		return false, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("validateLegacyUser: unexpected status code %d when validating legacy user %s against %s", 
+		return false, fmt.Errorf("validateLegacyUser: unexpected status code %d when validating legacy user %q against %q.", 
 		resp.StatusCode, config.legacy_user, config.controller_url)
 	}
 	defer resp.Body.Close()
@@ -361,6 +363,9 @@ func (config *ControllerCfg) decsAPICall(method string, api_name string, url_val
 
     if resp.StatusCode == http.StatusOK {
 		return resp, nil
+	} else {
+		return nil, fmt.Errorf("decsAPICall: unexpected status code %d when calling API %q with request Body %q", 
+		resp.StatusCode, req.URL, params_str)
 	}
 	
 	/*

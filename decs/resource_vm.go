@@ -101,36 +101,57 @@ func resourceVm() *schema.Resource {
 				Description: "Name of the OS image to base this virtual machine on. This parameter is case sensitive.",
 			},
 
-			/*
 			"boot_disk": {
 				Type:        schema.TypeList,
 				Required:    true,
 				MaxItems:    1,
 				Elem:        &schema.Resource {
-					// Schema:  ??,
+					Schema:  diskSubresourceSchema(),
 				},
 				Description: "Specification for a boot disk on this virtual machine.",
 			},
-			*/
 
-			"networks": {
+			"data_disks": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				MaxItems:    12,
 				Elem:        &schema.Resource {
-					// Schema:  ??,
+					Schema:  diskSubresourceSchema(),
+				},
+				Description: "Specification for data disks on this virtual machine.",
+			},
+
+			
+			"networks": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    8,
+				Elem:        &schema.Resource {
+					Schema:  networkSubresourceSchema(),
 				},
 				Description: "Specification for the networks to connect this virtual machine to.",
 			},
 			
+			/*
 			"ssh_key": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				MaxItems:    12,
 				Elem:        &schema.Resource {
-					// Schema:  ??,
+					Schema:  sshSubresourceSchema(),
 				},
 				Description: "SSH keys to authorize on this virtual machine.",
+			},
+			*/
+
+			"port_forwards": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    12,
+				Elem:        &schema.Resource {
+					Schema:  portforwardSubresourceSchema(),
+				},
+				Description: "Specification for the port forwards to configure for this virtual machine.",
 			},
 
 			"description": {
@@ -139,11 +160,13 @@ func resourceVm() *schema.Resource {
 				Description: "Description of this virtual machine.",
 			},
 
+			/*
 			"vmid": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Unique ID of this virtual machine. This parameter is assigned by the cloud when the machine is created.",
 			},
+			*/
 		},
 	}
 }

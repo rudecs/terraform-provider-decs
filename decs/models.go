@@ -32,37 +32,37 @@ var Timeout180s = time.Second * 180
 // structures related to /cloudapi/cloudspaces/list API
 //
 type UserAclRecord struct {
-	status string          `json:"status"`
-	can_delete bool        `json:"canBeDeleted"`
-	acc_rights string      `json:"right"`
-	acc_type string        `json:"type"`
-	ugroup_id string       `json:"userGroupId"`
+	Status string          `json:"status"`
+	CanBeDeleted bool      `json:"canBeDeleted"`
+	AccRights string       `json:"right"`
+	AccType string         `json:"type"`
+	UgroupID string        `json:"userGroupId"`
 }
 
 type AccountAclRecord struct {
-	status string          `json:"status"`
-	explicit bool          `json:"explicit"`
-	acc_rights string      `json:"right"`
-	acc_type string        `json:"type"`
-	entity_id string       `json:"userGroupId"`
-	guid string            `json:"guid"`
+	Status string          `json:"status"`
+	AccRights string       `json:"right"`
+	IsExplicit bool        `json:"explicit"`
+	EntityID string        `json:"userGroupId"`
+	Guid string            `json:"guid"`
+	AccType string         `json:"type"`
 }
 
 type CloudspaceRecord struct {
-	status string          `json:"status"`
-	update_time uint64     `json:"updateTime"`
-	ext_net_ip string      `json:"externalnetworkip"`
-	name string            `json:"name"`
-	decsription string     `json:"description"`
-	create_time uint64     `json:"creationTime"`
-	acl []UserAclRecord    `json:"acl"`
-	owner AccountAclRecord `json:"accountAcl"`
-	grid_id int            `json:"gid"`
-	location string        `json:"location"`
-	public_ip string       `json:"publicipaddress"`
-	account_name string    `json:"accountName"`
-	id uint                `json:"id"`
-	account_id int         `json:"accountId"`
+	Status string          `json:"status"`
+	UpdateTime uint64      `json:"updateTime"`
+	ExtNetIP string        `json:"externalnetworkip"`
+	Name string            `json:"name"`
+	Decsription string     `json:"descr"`
+	CreateTime uint64      `json:"creationTime"`
+	Acl []UserAclRecord    `json:"acl"`
+	Owner AccountAclRecord `json:"accountAcl"`
+	GridID int             `json:"gid"`
+	Location string        `json:"location"`
+	PublicIP string        `json:"publicipaddress"`
+	TenantName string      `json:"accountName"`
+	ID uint                `json:"id"`
+	TenantID int           `json:"accountId"`
 }
 
 const CloudspacesListAPI = "/restmachine/cloudapi/cloudspaces/list"
@@ -73,47 +73,47 @@ type CloudspacesListResp []CloudspaceRecord
 //
 const CloudspacesCreateAPI= "/restmachine/cloudapi/cloudspaces/create"
 type CloudspacesCreateParam struct {
-	account_id int         `json:"accountId"`
-	location string        `json:"location"`
-	name string            `json:"name"`
-	owner string           `json:"access"`
-	cpu int                `json:"maxCPUCapacity"`
-	ram int                `json:"maxMemoryCapacity"`
-	disk int               `json:"maxVDiskCapacity"`
-	net_traffic int        `json:"maxNetworkPeerTransfer"`
-	ext_ips int            `json:"maxNumPublicIP"`
-	ext_net_id int         `json:"externalnetworkid"`
-	allowed_size_ids []int `json:"allowedVMSizes"`
-	int_net_range string   `json:"privatenetwork"`
+	TenantID int           `json:"accountId"`
+	Location string        `json:"location"`
+	Name string            `json:"name"`
+	Owner string           `json:"access"`
+	Cpu int                `json:"maxCPUCapacity"`
+	Ram int                `json:"maxMemoryCapacity"`
+	Disk int               `json:"maxVDiskCapacity"`
+	NetTraffic int         `json:"maxNetworkPeerTransfer"`
+	ExtIPs int             `json:"maxNumPublicIP"`
+	ExtNetID int           `json:"externalnetworkid"`
+	AllowedSizeIDs []int   `json:"allowedVMSizes"`
+	IntNetRange string     `json:"privatenetwork"`
 } 
 
 //
 // structures related to /cloudapi/cloudspaces/get API call
 //
 type QuotaRecord struct {
-	cpu int                `json:"CU_C"`
-	ram int                `json:"CU_M"`
-	disk int               `json:"CU_D"`
-	net_traffic int        `json:"CU_NP"`
-	ext_ips int            `json:"CU_I"`
+	Cpu int                `json:"CU_C"`
+	Ram int                `json:"CU_M"`
+	Disk int               `json:"CU_D"`
+	NetTraffic int         `json:"CU_NP"`
+	ExtIPs int             `json:"CU_I"`
 }
 
 const CloudspacesGetAPI= "/restmachine/cloudapi/cloudspaces/get"
 type CloudspacesGetResp struct {
-	status string          `json:"status"`
-	update_time uint64     `json:"updateTime"`
-	ext_net_ip string      `json:"externalnetworkip"`
-	decsription string     `json:"description"`
-	quotas QuotaRecord     `json:"resourceLimits"`
-	id uint                `json:"id"`
-	account_id int         `json:"accountId"`
-	name string            `json:"name"`
-	create_time uint64     `json:"creationTime"`
-	acl []UserAclRecord    `json:"acl"`
-	secret string          `json:"secret"`
-	grid_id int            `json:"gid"`
-	location string        `json:"location"`
-	public_ip string       `json:"publicipaddress"`
+	Status string          `json:"status"`
+	UpdateTime uint64      `json:"updateTime"`
+	ExtNetIP string        `json:"externalnetworkip"`
+	Description string     `json:"description"`
+	Quotas QuotaRecord     `json:"resourceLimits"`
+	ID uint                `json:"id"`
+	TenantID int           `json:"accountId"`
+	Name string            `json:"name"`
+	CreateTime uint64      `json:"creationTime"`
+	Acl []UserAclRecord    `json:"acl"`
+	Secret string          `json:"secret"`
+	GridID int             `json:"gid"`
+	Location string        `json:"location"`
+	PublicIP string        `json:"publicipaddress"`
 }
 
 // 
@@ -121,13 +121,13 @@ type CloudspacesGetResp struct {
 //
 const CloudspacesUpdateAPI = "/restmachine/cloudapi/cloudspaces/update"
 type CloudspacesUpdateParam struct {
-	id uint                `json:"cloudspaceId"`
-	name string            `json:"name"`
-	cpu int                `json:"maxCPUCapacity"`
-	ram int                `json:"maxMemoryCapacity"`
-	disk int               `json:"maxVDiskCapacity"`
-	net_traffic int        `json:"maxNetworkPeerTransfer"`
-	ext_ips int            `json:"maxNumPublicIP"`
+	ID uint                `json:"cloudspaceId"`
+	Name string            `json:"name"`
+	Cpu int                `json:"maxCPUCapacity"`
+	Ram int                `json:"maxMemoryCapacity"`
+	Disk int               `json:"maxVDiskCapacity"`
+	NetTraffic int         `json:"maxNetworkPeerTransfer"`
+	ExtIPs int             `json:"maxNumPublicIP"`
 }
 
 //
@@ -135,47 +135,47 @@ type CloudspacesUpdateParam struct {
 //
 const MachineCreateAPI = "/restmachine/cloudapi/machines/create"
 type MachineCreateParam struct {
-	vdc_id uint            `json:"cloudspaceId"`
-	name string            `json:"name"`
-	description string     `json:"description"`
-	cpu int                `json:"vcpus"`
-	ram int                `json:"memory"`
-	image_id int           `json:"imageId"`
-	boot_disk int          `json:"disksize"`
-	data_disks []int       `json:"datadisks"`
-	user_data string       `json:"userdata"`
+	ResGroupID uint        `json:"cloudspaceId"`
+	Name string            `json:"name"`
+	Description string     `json:"description"`
+	Cpu int                `json:"vcpus"`
+	Ram int                `json:"memory"`
+	ImageID int            `json:"imageId"`
+	BootDisk int           `json:"disksize"`
+	DataDisks []int        `json:"datadisks"`
+	UserData string        `json:"userdata"`
 }
 
 // 
 // structures related to /cloudapi/machines/list API
 //
 type NicRecord struct {
-	status string          `json:"status"`
-	mac_address string     `json:"macAddress"`
-	reference_id string    `json:"referenceId"`
-	device_name string     `json:"deviceName"`
-	nic_type string        `json:"type"`
-	params string          `json:"params"`
-	network_id int         `json:"networkId"`
-	guid string            `json:"guid"`
-	ip_address string      `json:"ipAddress"`
+	Status string          `json:"status"`
+	MacAddress string      `json:"macAddress"`
+	ReferenceID string     `json:"referenceId"`
+	DeviceName string      `json:"deviceName"`
+	NicType string         `json:"type"`
+	Params string          `json:"params"`
+	NetworkID int          `json:"networkId"`
+	Guid string            `json:"guid"`
+	IPAddress string       `json:"ipAddress"`
 }
 
 type MachineRecord struct {
-	status string          `json:"status"`
-	stack_id int           `json:"stackId"`
-	update_time uint64     `json:"updateTime"`
-	reference_id string    `json:"referenceId"`
-	name string            `json:"name"`
-	nics []NicRecord       `json:"nics"`
-	size_id int            `json:"sizeId"`
-	data_disks []uint      `json:"disks"`
-	create_time uint64     `json:"creationTime"`
-	image_id int           `json:"imageId"`
-	boot_disk int          `json:"storage"`
-	cpu int                `json:"vcpus"`
-	ram int                `json:"memory"`
-	id uint                `json:"id"`
+	Status string          `json:"status"`
+	StackID int            `json:"stackId"`
+	UpdateTime uint64      `json:"updateTime"`
+	ReferenceID string     `json:"referenceId"`
+	Name string            `json:"name"`
+	NICs []NicRecord       `json:"nics"`
+	SizeID int             `json:"sizeId"`
+	DataDisks []uint       `json:"disks"`
+	CreateTime uint64      `json:"creationTime"`
+	ImageID int            `json:"imageId"`
+	BootDisk int           `json:"storage"`
+	Cpu int                `json:"vcpus"`
+	Ram int                `json:"memory"`
+	ID uint                `json:"id"`
 }
 
 const MachinesListAPI = "/restmachine/cloudapi/machines/list"
@@ -185,55 +185,55 @@ type MachinesListResp []MachineRecord
 // structures related to /cloudapi/machines/get
 //
 type DataDiskRecord struct {
-	status string          `json:"status"`
-	size_max int           `json:"sizeMax"`
-	label string           `json:"name"`
-	description string     `json:"descr"`
-	acl map[string]string  `json:"acl"`
-	disk_type string       `json:"type"`
-	id uint                `json:"id"`
+	Status string          `json:"status"`
+	SizeMax int            `json:"sizeMax"`
+	Label string           `json:"name"`
+	Description string     `json:"descr"`
+	Acl map[string]string  `json:"acl"`
+	DiskType string        `json:"type"`
+	ID uint                `json:"id"`
 }
 
 type GuestLoginRecord struct {
-	guid string            `json:"guid"`
-	login string           `json:"login"`
-	password string        `json:"password"`
+	Guid string            `json:"guid"`
+	Login string           `json:"login"`
+	Password string        `json:"password"`
 }
 
 const MachinesGetAPI = "/restmachine/cloudapi/machines/get"
 type MachinesGetResp struct {
-	vdc_id uint            `json:"cloudspaceId`
-	status string          `json:"status"`
-	update_time uint64     `json:"updateTime"`
-	hostname string        `json:"hostname"`
-	is_locked bool         `json:"locked"`
-	name string            `json:"name"`
-	create_time uint64     `json:"creationTime"`
-	size_id uint           `json:"sizeid"`
-	cpu int                `json:"vcpus"`
-	ram int                `json:"memory"`
-	boot_disk int          `json:"storage"`
-	data_disks []DiskRecord `json:"disks"`
-	nics []NicRecord       `json:"interfaces"`
-	guest_logins []GuestLoginRecord `json:"accounts"`
-	image_name string      `json:"osImage"`
-	image_id int           `json:"imageid"`
-	description string     `json:"description"`
-	id uint                `json:"id"`
+	ResGroupID uint        `json:"cloudspaceId`
+	Status string          `json:"status"`
+	UpdateTime uint64      `json:"updateTime"`
+	Hostname string        `json:"hostname"`
+	IsLocked bool          `json:"locked"`
+	Name string            `json:"name"`
+	CreateTime uint64      `json:"creationTime"`
+	SizeID uint            `json:"sizeid"`
+	Cpu int                `json:"vcpus"`
+	Ram int                `json:"memory"`
+	BootDisk int           `json:"storage"`
+	DataDisks []DataDiskRecord `json:"disks"`
+	NICs []NicRecord       `json:"interfaces"`
+	GuestLogins []GuestLoginRecord `json:"accounts"`
+	ImageName string       `json:"osImage"`
+	ImageID int            `json:"imageid"`
+	Description string     `json:"description"`
+	ID uint                `json:"id"`
 }
 
 //
 // structures related to /restmachine/cloudapi/images/list API
 //
-type ImagesRecord struct {
-	status string       `json:"status"`
-	username string     `json:"username"`
-	description string  `json:"description"`
-	account_id uint     `json:"accountId"`
-	size int            `json:"size"`
-	image_type string   `json:"type"`
-	id uint             `json:"id"`
-	name string         `json:"name"`
+type ImageRecord struct {
+	Status string       `json:"status"`
+	Username string     `json:"username"`
+	Description string  `json:"description"`
+	TenantID uint       `json:"accountId"`
+	Size int            `json:"size"`
+	ImageType string    `json:"type"`
+	ID uint             `json:"id"`
+	Name string         `json:"name"`
 }
 
 const ImagesListAPI = "/restmachine/cloudapi/images/list"
@@ -243,22 +243,22 @@ type ImagesListResp []ImageRecord
 // structures related to /cloudapi/externalnetwork/list API
 //
 type ExtNetworkRecord struct {
-	ip_range string        `json:"name"`
-	id uint                `json:"id"`
+	IPRange string        `json:"name"`
+	ID uint                `json:"id"`
 } 
 
 const  ExtNetworksListAPI = "/restmachine/cloudapi/externalnetwork/list"
-type ExtNetworksResp []ExtNetRecord
+type ExtNetworksResp []ExtNetworkRecord
 
 //
 // structures related to /cloudapi/accounts/list API
 //
 type TenantRecord struct {
-	id int                 `json:"id"`
-	update_time uint64     `json:"updateTime"`
-	create_time uint64     `json:"creationTime"`
-	name string            `json:"name"`
-	acl []UserAclRecord    `json:"acl"`
+	ID int                 `json:"id"`
+	UpdateTime uint64      `json:"updateTime"`
+	CreateTime uint64      `json:"creationTime"`
+	Name string            `json:"name"`
+	Acl []UserAclRecord    `json:"acl"`
 }
 
 const TenantsListAPI = "/restmachine/cloudapi/accounts/list"

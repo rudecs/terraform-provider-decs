@@ -104,6 +104,8 @@ func Provider() *schema.Provider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource {
+			"decs_resgroup": dataSourceResgroup(),
+			"decs_vm": dataSourceVm(),
 		},
 		
 		ConfigureFunc: providerConfigure,

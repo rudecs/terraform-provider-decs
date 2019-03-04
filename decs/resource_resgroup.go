@@ -36,17 +36,67 @@ func resourceResgroupDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
+func resourceResgroupExists(d *schema.ResourceData, m interface{}) (bool, error) {
+	// Reminder: according to Terraform rules, this function should not modify ResourceData argument
+	return true, nil
+}
+
 func resourceResgroup() *schema.Resource {
 	return &schema.Resource {
+		SchemaVersion: 1,
+
 		Create: resourceResgroupCreate,
 		Read:   resourceResgroupRead,
 		Update: resourceResgroupUpdate,
 		Delete: resourceResgroupDelete,
+		Exists: resourceResgroupExists,
+
+		Timeouts: &schema.ResourceTimeout {
+			Create:  &Timeout180s,
+			Read:    &Timeout30s,
+			Update:  &Timeout180s,
+			Delete:  &Timeout60s,
+			Default: &Timeout60s,
+		},
 
 		Schema: map[string]*schema.Schema {
 			"name": &schema.Schema {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Name of this resource group. Names are unique within the context of a tenant and case sensitive.",
+			},
+
+			"tenant": &schema.Schema {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Name of the tenant, which this resource group belongs to.",
+			},
+
+			"location": &schema.Schema {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Name of the location where this resource group should exist.",
+			},
+
+			"quota_cpu": &schema.Schema {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "The quota on the total number of CPUs in this resource group.",
+			},
+
+			"quota_ram": &schema.Schema {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "The quota on the total amount of RAM in this resource group, specified in MB.",
+			},
+
+			"quota_disk": &schema.Schema {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "The quota on the total volume of storage resources in this resource group, specified in GB.",
 			},
 		},
 	}

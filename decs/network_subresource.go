@@ -37,8 +37,8 @@ func networkSubresourceSchema() map[string]*schema.Schema {
 		"label": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "Unique label of this network connection to identify it amnong other connections for this VM."
-		}
+			Description: "Unique label of this network connection to identify it amnong other connections for this VM.",
+		},
 	}
 
 	return rets
