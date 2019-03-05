@@ -21,7 +21,6 @@ import (
 
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/url"
 
@@ -37,21 +36,14 @@ func dataSourceResgroupRead(d *schema.ResourceData, m interface{}) error {
 
 	controller := m.(*ControllerCfg)
 	url_values := &url.Values{}
-	resp, err := controller.decsAPICall("POST", CloudspacesListAPI, url_values)
+	body_string, err := controller.decsAPICall("POST", CloudspacesListAPI, url_values)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
-	model := CloudspacesListResp{}
-
-	tmp_body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	body_string := Jo2JSON(string(tmp_body))
 	log.Printf("%s", body_string)
 	log.Printf("dataSourceResgroupRead: ready to decode response body")
+	model := CloudspacesListResp{}
 	err = json.Unmarshal([]byte(body_string), &model)
 	if err != nil {
 		return err
@@ -63,8 +55,8 @@ func dataSourceResgroupRead(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-	*/
-	/*
+
+	
 	// var model []CloudspaceRecord
 	model := CloudspacesListResp{}
 	name = "vdc01"
@@ -76,12 +68,11 @@ func dataSourceResgroupRead(d *schema.ResourceData, m interface{}) error {
 	}
 	*/
 
-	log.Printf("%#v", model)
 	log.Printf("dataSourceResgroupRead: traversing decoded Json of length %d", len(model))
 	for index, item := range model {
 		// need to match VDC by name & tenant name
-		log.Printf("dataSourceResgroupRead: index %d, name %q, tenant %q", index, item.Name, item.TenantName)
 		if item.Name == name && item.TenantName == tenant_name {
+			log.Printf("dataSourceResgroupRead: index %d, name %q, tenant %q", index, item.Name, item.TenantName)
 			d.SetId(fmt.Sprintf("%d", model[index].ID))
 			d.Set("tenant_id", model[index].TenantID)
 			// d.Set("field_name", value)

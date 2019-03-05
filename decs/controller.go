@@ -310,16 +310,13 @@ func (config *ControllerCfg) validateLegacyUser() (bool, error) {
 	return true, nil
 }
 
-func (config *ControllerCfg) decsAPICall(method string, api_name string, url_values *url.Values) (resp *http.Response, err error) {
+func (config *ControllerCfg) decsAPICall(method string, api_name string, url_values *url.Values) (json_resp string, err error) {
 	// This is a convenience wrapper around standard HTTP request methods that is aware of the 
 	// authorization mode for which the provider was initialized and compiles request accordingly.
-	//
-	// NOTE: calling party should always close resp.Body, returned by this function, when err is nil.
-	// E.g. put something like "defer resp.Body.Close()" after the decsAPICall occurence in case err == nil.
 
 	if config.cc_client == nil {
 		// this should never happen if ClientConfig was properly called prior to decsAPICall 
-		return nil, fmt.Errorf("decsAPICall method called with unconfigured DECS cloud controller HTTP client.")
+		return "", fmt.Errorf("decsAPICall method called with unconfigured DECS cloud controller HTTP client.")
 	}
 
 	// Example: to create api_params, one would generally do the following:
@@ -337,7 +334,7 @@ func (config *ControllerCfg) decsAPICall(method string, api_name string, url_val
 	//
 
 	if config.auth_mode_code == MODE_UNDEF {
-		return nil, fmt.Errorf("decsAPICall method called for unknown authorization mode.")
+		return "", fmt.Errorf("decsAPICall method called for unknown authorization mode.")
 	}
 
 	if config.auth_mode_code == MODE_LEGACY {
@@ -347,7 +344,7 @@ func (config *ControllerCfg) decsAPICall(method string, api_name string, url_val
 
 	req, err := http.NewRequest(method, config.controller_url + api_name, strings.NewReader(params_str))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Content-Length", strconv.Itoa(len(params_str)))
@@ -356,15 +353,22 @@ func (config *ControllerCfg) decsAPICall(method string, api_name string, url_val
 		req.Header.Set("Authorization", fmt.Sprintf("bearer %s", config.jwt))
 	} 
 	
-	resp, err = config.cc_client.Do(req)
+	resp, err := config.cc_client.Do(req)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
+	defer resp.Body.Close()
 
     if resp.StatusCode == http.StatusOK {
-		return resp, nil
+		tmp_body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return "", err
+		} 
+		json_resp := Jo2JSON(string(tmp_body))
+		log.Printf("decsAPICall:\n %s", json_resp)
+		return json_resp, nil
 	} else {
-		return nil, fmt.Errorf("decsAPICall: unexpected status code %d when calling API %q with request Body %q", 
+		return "", fmt.Errorf("decsAPICall: unexpected status code %d when calling API %q with request Body %q", 
 		resp.StatusCode, req.URL, params_str)
 	}
 	
@@ -374,6 +378,6 @@ func (config *ControllerCfg) decsAPICall(method string, api_name string, url_val
 	}
 	*/
 
-	return nil, err
+	return "", err
 }
 

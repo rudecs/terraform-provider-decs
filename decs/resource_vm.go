@@ -94,11 +94,11 @@ func resourceVm() *schema.Resource {
 				Description:  "Amount of RAM in MB to allocate to this virtual machine.",
 			},
 
-			"image_name": {
-				Type:        schema.TypeString,
+			"image_id": {
+				Type:        schema.TypeInt,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Name of the OS image to base this virtual machine on. This parameter is case sensitive.",
+				Description: "ID of the OS image to base this virtual machine on.",
 			},
 
 			"boot_disk": {
