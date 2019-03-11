@@ -21,8 +21,8 @@ import (
 
 	"encoding/json"
 	"fmt"
-	"log"
-	"net/url"
+	// "log"
+	// "net/url"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
@@ -30,60 +30,28 @@ import (
 
 
 func dataSourceVmRead(d *schema.ResourceData, m interface{}) error {
-	name := d.Get("name").(string)
-	rgid := d.Get("rgid").(int)
+	vm_facts, err := utilityVmCheckPresence(d, m)
+	if vm_facts == "" {
+		// if empty string is returned from utilityVmCheckPresence then there is no
+		// such VM and err tells so - just return it to the calling party 
+		return err
+	}
 
-	controller := m.(*ControllerCfg)
-	list_url_values := &url.Values{}
-	list_url_values.Add("cloudspaceId", fmt.Sprintf("%d",rgid))
-	body_string, err := controller.decsAPICall("POST", MachinesListAPI, list_url_values)
+	model := MachinesGetResp{}
+	err = json.Unmarshal([]byte(vm_facts), &model)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("%s", body_string)
-	log.Printf("dataSourceVmRead: ready to decode mashines/list response body")
-	vm_list := MachinesListResp{}
-	err = json.Unmarshal([]byte(body_string), &vm_list)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("%#v", vm_list)
-	log.Printf("dataSourceVmRead: traversing decoded JSON of length %d", len(vm_list))
-	for index, item := range vm_list {
-		// need to match VM by name
-		if item.Name == name {
-			log.Printf("dataSourceVmRead: index %d, matched name %q", index, item.Name)
-			// we found the VM we need - not get detailed information via API call to cloudapi/machines/get
-			get_url_values := &url.Values{}
-			get_url_values.Add("machineId", fmt.Sprintf("%d", item.ID))
-			body_string, err = controller.decsAPICall("POST", MachinesGetAPI, get_url_values)
-			if err != nil {
-				return err
-			}
-
-			log.Printf("%s", body_string)
-			log.Printf("dataSourceVmRead: ready to decode mashines/get response body")
-			model := MachinesGetResp{}
-			err = json.Unmarshal([]byte(body_string), &model)
-			if err != nil {
-				return err
-			}
-
-			d.SetId(fmt.Sprintf("%d", model.ID))
-			d.Set("cpu", model.Cpu)
-			d.Set("ram", model.Ram)
-			d.Set("boot_disk", model.BootDisk)
-			d.Set("image_id", model.ImageID)
-			d.Set("image_name", model.ImageName)
-			d.Set("description", model.Description)
-			// d.Set("field_name", value)
-			return nil
-		}
-	}
-
-	return fmt.Errorf("Cannot find VM name %q in resource group ID %d", name, rgid)
+	d.SetId(fmt.Sprintf("%d", model.ID))
+	d.Set("cpu", model.Cpu)
+	d.Set("ram", model.Ram)
+	d.Set("boot_disk", model.BootDisk)
+	d.Set("image_id", model.ImageID)
+	// d.Set("image_name", model.ImageName)
+	d.Set("description", model.Description)
+	// d.Set("field_name", value)
+	return nil
 }
 
 func dataSourceVm() *schema.Resource {

@@ -146,6 +146,9 @@ type MachineCreateParam struct {
 	UserData string        `json:"userdata"`
 }
 
+// strucures related to cloudapi/machines/delete API
+const MachineDeleteAPI = "/restmachine/cloudapi/machines/delete"
+
 // 
 // structures related to /cloudapi/machines/list API
 //

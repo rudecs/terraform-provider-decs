@@ -25,7 +25,7 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceResgroupRead(d *schema.ResourceData, m interface{}) error {
-	return nil
+	return nil // calling dataSourceResgroupRead(d, m) from here may not be the best idea - consider!
 }
 
 func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {

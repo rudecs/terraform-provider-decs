@@ -27,7 +27,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
+	// "time"
 
 	"github.com/dgrijalva/jwt-go"
 
@@ -124,7 +124,7 @@ func ControllerConfigure(d *schema.ResourceData) (*ControllerCfg, error) {
 	}
 
 	ret_config.cc_client = &http.Client{
-		Timeout: time.Second * 30,
+		Timeout: Timeout180s, // time.Second * 30,
 	}
 
 	switch ret_config.auth_mode_code {

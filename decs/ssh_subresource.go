@@ -20,39 +20,24 @@ package decs
 import (
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
+	// "github.com/hashicorp/terraform/helper/validation"
 )
 
-func diskSubresourceSchema() map[string]*schema.Schema {
+func sshSubresourceSchema() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema {
-		"label": {
+		"user": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "Unique label to identify this disk among other disks connected to this VM.",
+			Description: "Name of the user on the guest OS of the new VM, for which the following SSH key will be authorized.",
 		},
 
-		"size": {
-			Type:        schema.TypeInt,
+		"public_key": {
+			Type:        schema.TypeString,
 			Required:    true,
-			ValidateFunc: validation.IntAtLeast(1),
-			Description: "Size of the disk in GB.",
+			Description: "Public part of SSH key to authorize to the specified user on the VM being created.",
 		},
-
-		"pool": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Default:     "default",
-			Description: "Pool from which this disk should be provisioned.",
-		},
-
-		"provider": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Default:     "default",
-			Description: "Storage provider (storage technology type) by which this disk should be served.",
-		},
-		
 	}
 
 	return rets
 }
+

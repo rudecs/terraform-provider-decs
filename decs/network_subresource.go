@@ -19,15 +19,13 @@ package decs
 
 import (
 
-	// "time"
-
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 )
 
 func networkSubresourceSchema() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema {
-		"network_id": {
+		"id": {
 			Type:        schema.TypeInt,
 			Required:    true,
 			ValidateFunc: validation.IntAtLeast(1),
@@ -46,6 +44,12 @@ func networkSubresourceSchema() map[string]*schema.Schema {
 
 func portforwardSubresourceSchema() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema {
+		"label": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "Unique label of this network connection to identify it amnong other connections for this VM.",
+		},
+		
 		"ext_port": {
 			Type:        schema.TypeInt,
 			Required:    true,
