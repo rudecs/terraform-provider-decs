@@ -21,37 +21,69 @@ import (
 
 	"encoding/json"
 	"fmt"
-	// "log"
+	"log"
 	// "net/url"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 )
 
+func flattenVm(d *schema.ResourceData, vm_facts string) error {
+	// NOTE: this function modifies ResourceData argument - as such it should never be called
+	// from resourceVmExists(...) method
+	model := MachinesGetResp{}
+	log.Printf("flattenVm: ready to unmarshal string %q", vm_facts) 
+	err := json.Unmarshal([]byte(vm_facts), &model)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("flattenVm: model.ID %d, model.ResGroupID %d", model.ID, model.ResGroupID)
+			   
+	d.SetId(fmt.Sprintf("%d", model.ID))
+	d.Set("name", model.Name)
+	d.Set("rgid", model.ResGroupID)
+	d.Set("cpu", model.Cpu)
+	d.Set("ram", model.Ram)
+	// d.Set("boot_disk", model.BootDisk)
+	d.Set("image_id", model.ImageID)
+	d.Set("description", model.Description)
+
+	bootdisk_map := make(map[string]interface{})
+	bootdisk_map["size"] = model.BootDisk
+	bootdisk_map["label"] = "boot"
+	bootdisk_map["pool"] = "default"
+	bootdisk_map["provider"] = "default"
+	
+	if err = d.Set("boot_disk", []interface{}{bootdisk_map}); err != nil {
+		return err
+	}
+
+	if len(model.DataDisks) > 0 {
+		if err = d.Set("data_disks", flattenDataDisks(model.DataDisks)); err != nil {
+			return err
+		}
+	}
+
+	if len(model.NICs) > 0 {
+		if err = d.Set("nics", flattenNICs(model.NICs)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 func dataSourceVmRead(d *schema.ResourceData, m interface{}) error {
 	vm_facts, err := utilityVmCheckPresence(d, m)
 	if vm_facts == "" {
 		// if empty string is returned from utilityVmCheckPresence then there is no
 		// such VM and err tells so - just return it to the calling party 
+		d.SetId("") // ensure ID is empty
 		return err
 	}
 
-	model := MachinesGetResp{}
-	err = json.Unmarshal([]byte(vm_facts), &model)
-	if err != nil {
-		return err
-	}
-
-	d.SetId(fmt.Sprintf("%d", model.ID))
-	d.Set("cpu", model.Cpu)
-	d.Set("ram", model.Ram)
-	d.Set("boot_disk", model.BootDisk)
-	d.Set("image_id", model.ImageID)
-	// d.Set("image_name", model.ImageName)
-	d.Set("description", model.Description)
-	// d.Set("field_name", value)
-	return nil
+	return flattenVm(d, vm_facts)
 }
 
 func dataSourceVm() *schema.Resource {
@@ -105,16 +137,49 @@ func dataSourceVm() *schema.Resource {
 				Description: "ID of the OS image this virtual machine is based on.",
 			},
 
+			/*
 			"image_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Name of the OS image this virtual machine is based on.",
 			},
+			*/
 
 			"boot_disk": {
-				Type:        schema.TypeInt,
+				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "Size of the boot disk on this virtual machine.",
+				MinItems:    1,
+				Elem:        &schema.Resource {
+					Schema:  diskSubresourceSchema(),
+				},
+				Description: "Specification for a boot disk on this virtual machine.",
+			},
+
+			"data_disks": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Resource {
+					Schema:  diskSubresourceSchema(),
+				},
+				Description: "Specification for data disks on this virtual machine.",
+			},
+
+			"networks": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Resource {
+					Schema:  networkSubresourceSchema(),
+				},
+				Description: "Specification for the networks to connect this virtual machine to.",
+			},
+
+			"nics": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Resource {
+					Schema:  nicSubresourceSchema(),
+				},
+				Description: "Specification for the virutal NICs allocated to this virtual machine.",
 			},
 
 			"description": {

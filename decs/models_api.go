@@ -102,7 +102,7 @@ const CloudspacesGetAPI= "/restmachine/cloudapi/cloudspaces/get"
 type CloudspacesGetResp struct {
 	Status string          `json:"status"`
 	UpdateTime uint64      `json:"updateTime"`
-	ExtNetIP string        `json:"externalnetworkip"`
+	ExtIP string           `json:"externalnetworkip"`
 	Description string     `json:"description"`
 	Quotas QuotaRecord     `json:"resourceLimits"`
 	ID uint                `json:"id"`
@@ -205,7 +205,7 @@ type GuestLoginRecord struct {
 
 const MachinesGetAPI = "/restmachine/cloudapi/machines/get"
 type MachinesGetResp struct {
-	ResGroupID uint        `json:"cloudspaceId`
+	ResGroupID uint        `json:"cloudspaceid` // note that "id" is not capitalized in "cloudspaceid"
 	Status string          `json:"status"`
 	UpdateTime uint64      `json:"updateTime"`
 	Hostname string        `json:"hostname"`
@@ -266,3 +266,32 @@ type TenantRecord struct {
 
 const TenantsListAPI = "/restmachine/cloudapi/accounts/list"
 type TenantsListResp []TenantRecord
+
+//
+// structures related to /cloudapi/portforwarding/list API
+//
+type PortforwardRecord struct {
+	Proto string           `json:"protocol"`
+	IntPort string         `json:"localPort"`
+	ExtPort string         `json:"publicPort"`
+	ExtIP string           `json:"publicIp"`
+	IntIP string           `json:"localIp"`
+	VmID int               `json:"machineId"`
+	VmName string          `json:"machineName"`
+} 
+
+const PortforwardsListAPI = "/restmachine/cloudapi/portforwarding/list"
+type PortforwardsResp []PortforwardRecord
+
+const PortforwardingCreateAPI = "/restmachine/cloudapi/portforwarding/create"
+
+//
+// structures related to /cloudapi/machines/attachExternalNetwork API
+//
+const AttachExternalNetworkAPI = "/restmachine/cloudapi/machines/attachExternalNetwork"
+
+//
+//
+//
+const DiskCreateAPI = "/restmachine/cloudapi/disks/create"
+const DiskAttachAPI = "/restmachine/cloudapi/machines/attachDisk"

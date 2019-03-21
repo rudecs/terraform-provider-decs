@@ -49,33 +49,16 @@ func dataSourceResgroupRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	/*
-	log.Printf("dataSourceResgroupRead: ready to decode response body")
-	err = json.NewDecoder(resp.Body).Decode(&model)
-	if err != nil {
-		return err
-	}
-
-	
-	// var model []CloudspaceRecord
-	model := CloudspacesListResp{}
-	name = "vdc01"
-	tenant_name = "GreyseTmpFromJS"
-	JsonPart := `[{"status":"DEPLOYED","updateTime":1523027184,"externalnetworkip":"185.193.143.152","name":"vdc01","descr":"","creationTime":1523027135,"acl":[{"status":"CONFIRMED","canBeDeleted":false,"right":"ACDRUX","type":"U","userGroupId":"vadim_sorokin_1@itsyouonline"},{"status":"CONFIRMED","canBeDeleted":false,"right":"CRX","type":"U","userGroupId":"svs1370g@itsyouonline"}],"accountAcl":{"status":"CONFIRMED","right":"RCX","explicit":true,"userGroupId":"svs1370g@itsyouonline","guid":"","type":"U"},"gid":2001,"location":"ds1","publicipaddress":"185.193.143.152","accountName":"GreyseTmpFromJS","id":76,"accountId":21},{"status":"DEPLOYED","updateTime":1523027184,"externalnetworkip":"185.193.143.152","name":"vdc01","descr":"","creationTime":1523027135,"acl":[{"status":"CONFIRMED","canBeDeleted":false,"right":"ACDRUX","type":"U","userGroupId":"vadim_sorokin_1@itsyouonline"},{"status":"CONFIRMED","canBeDeleted":false,"right":"CRX","type":"U","userGroupId":"svs1370g@itsyouonline"}],"accountAcl":{"status":"CONFIRMED","right":"RCX","explicit":true,"userGroupId":"svs1370g@itsyouonline","guid":"","type":"U"},"gid":2001,"location":"ds1","publicipaddress":"185.193.143.152","accountName":"GreyseTmpFromJS","id":76,"accountId":21}]`
-	err := json.Unmarshal([]byte(JsonPart), &model)
-	if err != nil {
-		return err
-	}
-	*/
-
 	log.Printf("dataSourceResgroupRead: traversing decoded Json of length %d", len(model))
 	for index, item := range model {
 		// need to match VDC by name & tenant name
 		if item.Name == name && item.TenantName == tenant_name {
 			log.Printf("dataSourceResgroupRead: index %d, name %q, tenant %q", index, item.Name, item.TenantName)
-			d.SetId(fmt.Sprintf("%d", model[index].ID))
-			d.Set("tenant_id", model[index].TenantID)
-			// d.Set("field_name", value)
+			d.SetId(fmt.Sprintf("%d", item.ID))
+			d.Set("name", item.Name)
+			d.Set("tenant_id", item.TenantID)
+			d.Set("grid_id", item.GridID)
+			d.Set("public_ip", item.PublicIP)
 			return nil
 		}
 	}
@@ -112,6 +95,12 @@ func dataSourceResgroup() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Unique ID of the tenant, which this resource group belongs to.",
+			},
+
+			"grid_id": &schema.Schema {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Unique ID of the grid, where this resource group is deployed.",
 			},
 
 			"public_ip": {

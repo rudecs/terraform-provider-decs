@@ -22,6 +22,7 @@ type DiskConfig struct {
 	Size int
 	Pool string
 	Provider string
+	ID int
 }
 
 type NetworkConfig struct {
@@ -54,6 +55,13 @@ type MachineConfig struct {
 	PortForwards []PortforwardConfig
 	SshKeys []SshKeyConfig
 	Description string
+	// The following two parameters are required to create data disks by 
+	// a separate disks/create API call
+	TenantID int
+	GridID int
+	// The following one paratmeter is required to create port forwards
+	// it will be obsoleted when we implement true Resource Groups
+	ExtIP string
 }
 
 type ResgroupQuotaConfig struct {
@@ -69,6 +77,8 @@ type ResgroupConfig struct {
 	Location string
 	Name string
 	ID int
+	GridID int
+	ExtIP string   // legacy field for VDC - this will eventually become obsoleted by true Resource Groups
 	Quota ResgroupQuotaConfig
 	Network NetworkConfig
 }

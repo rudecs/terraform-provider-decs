@@ -19,9 +19,49 @@ package decs
 
 import (
 
+	"fmt"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	// "github.com/hashicorp/terraform/helper/validation"
 )
+
+func makeSshKeysConfig(arg_list []interface{}) (sshkeys []SshKeyConfig, count int) {
+	count = len(arg_list) 
+	if count < 1 {
+		return nil, 0
+	}
+
+	sshkeys = make([]SshKeyConfig, count)
+	var subres_data map[string]interface{}
+	for index, value := range arg_list {
+		subres_data = value.(map[string]interface{})
+		sshkeys[index].User = subres_data["user"].(string)
+		sshkeys[index].SshKey = subres_data["public_key"].(string)
+	}
+
+	return sshkeys, count
+}
+
+func makeSshKeysArgString(sshkeys []SshKeyConfig) string {
+	// Prepare a string with username and public ssh key value in a format recognized by cloud-init utility.
+	// It is designed to be passed as "userdata" argument of virtual machine create API call.
+	const UserdataTemplate =
+	`%s\n
+	  - name: %s\n
+		ssh-authorized-keys:
+		- %s\n
+		shell: /bin/bash`
+	
+	if len(sshkeys) < 1 {
+		return ""
+	}
+
+	out := "users:"
+	for _, elem := range sshkeys {
+		out = fmt.Sprintf(UserdataTemplate, out, elem.User, elem.SshKey)
+	}
+	return out
+}
 
 func sshSubresourceSchema() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema {
@@ -35,6 +75,13 @@ func sshSubresourceSchema() map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "Public part of SSH key to authorize to the specified user on the VM being created.",
+		},
+
+		"shell": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Default:     "/bin/bash",
+			Description: "Guest user shell. This parameter is optional, default is /bin/bash.",
 		},
 	}
 
