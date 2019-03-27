@@ -205,7 +205,7 @@ type GuestLoginRecord struct {
 
 const MachinesGetAPI = "/restmachine/cloudapi/machines/get"
 type MachinesGetResp struct {
-	ResGroupID uint        `json:"cloudspaceid` // note that "id" is not capitalized in "cloudspaceid"
+	ResGroupID uint        `json:"cloudspaceid"` // note that "id" is not capitalized in "cloudspaceid"
 	Status string          `json:"status"`
 	UpdateTime uint64      `json:"updateTime"`
 	Hostname string        `json:"hostname"`
