@@ -119,11 +119,11 @@ func resourceVmCreate(d *schema.ResourceData, m interface{}) error {
 
 	if len(machine.DataDisks) > 0 || len(machine.PortForwards) > 0 {
 		// for data disk or port foreards provisioning we have to know Tenant ID
-		// and Grid ID so we call utilityResgroupGetFacts method to populate these 
+		// and Grid ID so we call utilityResgroupConfigGet method to populate these 
 		// fields in the machine structure that will be passed to provisionVmDisks or
 		// provisionVmPortforwards
-		log.Printf("resourceVmCreate: calling utilityResgroupGetFacts")
-		resgroup, err := controller.utilityResgroupGetFacts(machine.ResGroupID)
+		log.Printf("resourceVmCreate: calling utilityResgroupConfigGet")
+		resgroup, err := controller.utilityResgroupConfigGet(machine.ResGroupID)
 		if err == nil {
 			machine.TenantID = resgroup.TenantID
 			machine.GridID = resgroup.GridID
@@ -137,7 +137,7 @@ func resourceVmCreate(d *schema.ResourceData, m interface{}) error {
 	// Configure data disks
 	disks_ok := true
 	if len(machine.DataDisks) > 0 {
-		log.Printf("resourceVmCreate: calling provisionVmDisks for disk count %d", len(machine.DataDisks))
+		log.Printf("resourceVmCreate: calling utilityVmDisksProvision for disk count %d", len(machine.DataDisks))
 		if machine.TenantID == 0 {
 			// if TenantID is still 0 it means that we failed to get Resgroup Facts by
 			// a previous call to utilityResgroupGetFacts,
@@ -147,7 +147,7 @@ func resourceVmCreate(d *schema.ResourceData, m interface{}) error {
 			// provisionVmDisks accomplishes two steps for each data disk specification
 			// 1) creates the disks
 			// 2) attaches them to the VM
-			err = controller.provisionVmDisks(machine)
+			err = controller.utilityVmDisksProvision(machine)
 			if err != nil {
 				disks_ok = false
 			}
@@ -162,14 +162,14 @@ func resourceVmCreate(d *schema.ResourceData, m interface{}) error {
 	// Configure port forward rules
 	pfws_ok := true
 	if len(machine.PortForwards) > 0 {
-		log.Printf("resourceVmCreate: calling provisionVmPortforwards for pfw rules count %d", len(machine.PortForwards))
+		log.Printf("resourceVmCreate: calling utilityVmPortforwardsProvision for pfw rules count %d", len(machine.PortForwards))
 		if machine.ExtIP == "" {
 			// if ExtIP is still empty it means that we failed to get Resgroup Facts by
 			// a previous call to utilityResgroupGetFacts,
 			// hence we do not have technical ability to provision port forwards
 			pfws_ok = false
 		} else {
-			err := controller.provisionVmPortforwards(machine)
+			err := controller.utilityVmPortforwardsProvision(machine)
 			if err != nil {
 				pfws_ok = false
 			}	
@@ -186,8 +186,8 @@ func resourceVmCreate(d *schema.ResourceData, m interface{}) error {
 	// implementation we ignore all but the 1st network definition
 	nets_ok := true
 	if len(machine.Networks) > 0 {
-		log.Printf("resourceVmCreate: calling provisionVmNetworks for networks count %d", len(machine.Networks))
-		err := controller.provisionVmNetworks(machine)
+		log.Printf("resourceVmCreate: calling utilityVmNetworksProvision for networks count %d", len(machine.Networks))
+		err := controller.utilityVmNetworksProvision(machine)
 		if err != nil {
 			nets_ok = false
 		}
@@ -229,10 +229,11 @@ func resourceVmRead(d *schema.ResourceData, m interface{}) error {
 	// Continue with further reading of VM subresource parameters:
 	controller := m.(*ControllerCfg)
 	url_values := &url.Values{}
-	//
+
+	/*
 	// Obtain information on external networks
 	url_values.Add("machineId", d.Id())
-	body_string, err := controller.decsAPICall("POST", ExtNetworksListAPI, url_values)
+	body_string, err := controller.decsAPICall("POST", VmExtNetworksListAPI, url_values)
 	if err != nil {
 		return err
 	}
@@ -248,12 +249,23 @@ func resourceVmRead(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 	}
+	*/
+
+	/*
+	// Ext networks flattening is now done inside flattenVm because it is currently based
+	// on data read into NICs component by machine/get API call
+
+	if err = d.Set("networks", flattenNetworks()); err != nil {
+		return err
+	}
+	*/
 
 	//
 	// Obtain information on port forwards
 	url_values.Add("cloudspaceId", fmt.Sprintf("%d",d.Get("rgid")))
+	url_values.Add("machineId", d.Id())
 	pfw_list := PortforwardsResp{}
-	body_string, err = controller.decsAPICall("POST", PortforwardsListAPI, url_values)
+	body_string, err := controller.decsAPICall("POST", PortforwardsListAPI, url_values)
 	if err != nil {
 		return err
 	}

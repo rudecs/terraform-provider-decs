@@ -28,13 +28,13 @@ import (
 	// "github.com/hashicorp/terraform/helper/validation"
 )
 
-func (ctrl *ControllerCfg) provisionVmDisks(mcfg *MachineConfig) error {
+func (ctrl *ControllerCfg) utilityVmDisksProvision(mcfg *MachineConfig) error {
 	for index, disk := range mcfg.DataDisks {
 		url_values := &url.Values{}
 		// url_values.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
 		url_values.Add("accountId", fmt.Sprintf("%d", mcfg.TenantID))
 		url_values.Add("gid", fmt.Sprintf("%d", mcfg.GridID))
-		url_values.Add("name", fmt.Sprintf("%d", disk.Label))
+		url_values.Add("name", fmt.Sprintf("%s", disk.Label))
 		url_values.Add("description", fmt.Sprintf("Data disk for VM ID %d / VM Name: %s", mcfg.ID, mcfg.Name))
 		url_values.Add("size", fmt.Sprintf("%d", disk.Size))
 		url_values.Add("type", "D")
@@ -70,7 +70,7 @@ func (ctrl *ControllerCfg) provisionVmDisks(mcfg *MachineConfig) error {
 }
 
 
-func (ctrl *ControllerCfg) provisionVmPortforwards(mcfg *MachineConfig) error {
+func (ctrl *ControllerCfg) utilityVmPortforwardsProvision(mcfg *MachineConfig) error {
 	for _, rule := range mcfg.PortForwards {
 		url_values := &url.Values{}
 		url_values.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
@@ -88,7 +88,7 @@ func (ctrl *ControllerCfg) provisionVmPortforwards(mcfg *MachineConfig) error {
 	return nil
 }
 
-func (ctrl *ControllerCfg) provisionVmNetworks(mcfg *MachineConfig) error {
+func (ctrl *ControllerCfg) utilityVmNetworksProvision(mcfg *MachineConfig) error {
 	for _, net := range mcfg.Networks {
 		url_values := &url.Values{}
 		url_values.Add("machineId", fmt.Sprintf("%d", mcfg.ID))

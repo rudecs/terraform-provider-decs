@@ -19,6 +19,8 @@ package decs
 
 import (
 
+	"log"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 )
@@ -44,16 +46,33 @@ func makeDisksConfig(arg_list []interface{}) (disks []DiskConfig, count int) {
 }
 
 func flattenDataDisks(disks []DataDiskRecord) []interface{} {
-	var result = make([]interface{}, len(disks))
+	var length = 0
+	for _, value := range disks {
+		if value.DiskType == "D" {
+			length += 1
+		}
+	}
+	log.Printf("flattenDataDisks: found %d disks with D type", length)
+
+	result := make([]interface{}, length)
+	if length == 0 {
+		return result
+	}
+
 	elem := make(map[string]interface{})
 
-	for index, value := range disks {
-		elem["label"] = value.Label
-		elem["size"] = value.SizeMax
-		elem["disk_id"] = value.ID
-		elem["pool"] = "default"
-		elem["provider"] = "default"
-		result[index] = elem
+	var subindex = 0
+	for _, value := range disks {
+		if value.DiskType == "D" {
+			elem["label"] = value.Label
+			elem["size"] = value.SizeMax
+			elem["disk_id"] = value.ID
+			elem["pool"] = "default"
+			elem["provider"] = "default"
+			result[subindex] = elem
+			subindex += 1
+		}
+		
 	}
 
 	return result

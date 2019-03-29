@@ -19,6 +19,10 @@ package decs
 
 import (
 
+	"log"
+	"strconv"
+	"strings"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 )
@@ -34,21 +38,49 @@ func makeNetworksConfig(arg_list []interface{}) (nets []NetworkConfig, count int
 	var subres_data map[string]interface{}
 	for index, value := range arg_list {
 			subres_data = value.(map[string]interface{})
-			nets[index].Label = subres_data["label"].(string)
-			nets[index].NetworkID = subres_data["id"].(int)
+			// nets[index].Label = subres_data["label"].(string)
+			nets[index].NetworkID = subres_data["network_id"].(int)
 		}
 
 	return nets, count
 } 
 
-func flattenNetworks(nets []ExtNetworkRecord) []interface{} {
-	result := make([]interface{}, len(nets))
+func flattenNetworks(nets []NicRecord) []interface{} {
+	// this function expects an array of NicRecord as returned by machines/get API call
+	// NOTE: it does NOT expect a strucutre as returned by externalnetwork/list
+	var length = 0
+	var strarray []string
+
+	for _, value := range nets {
+		if value.NicType == "PUBLIC" {
+			length += 1
+		}
+	}
+	log.Printf("flattenNetworks: found %d NICs with PUBLIC type", length)
+
+	result := make([]interface{}, length)
+	if length == 0 {
+		return result
+	}
+
 	elem := make(map[string]interface{})
 
+	var subindex = 0
 	for index, value := range nets {
-		elem["network_id"] = value.ID
-		elem["ip_range"] = value.IPRange
-		result[index] = elem
+		if value.NicType == "PUBLIC" {
+			// this will be changed as network segments entity 
+			// value.Params for ext net comes in a form "gateway:176.118.165.1 externalnetworkId:6"
+			// for network_id we need to extract from this string
+			strarray = strings.Split(value.Params, " ")
+			substr := strings.Split(strarray[1], ":")
+			elem["network_id"], _ = strconv.Atoi(substr[1])
+			elem["ip_range"] = value.IPAddress
+			// elem["label"] = ... - should be uncommented for the future release
+			log.Printf("flattenNetworks: parsed element %d - network_id %d, ip_range %q", 
+		                index, elem["network_id"].(int), value.IPAddress)
+			result[subindex] = elem
+			subindex += 1
+		}
 	}
 
 	return result 
@@ -63,17 +95,26 @@ func networkSubresourceSchema() map[string]*schema.Schema {
 			Description: "ID of the network to attach to this VM.",
 		},
 
+		/* should be uncommented for the future release
 		"label": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "Unique label of this network connection to identify it amnong other connections for this VM.",
+			Description: "Unique label of this network connection to identify it among other connections for this VM.",
 		},
+		*/
 
 		"ip_range": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Range of IP addresses defined for this network.",
 		},
+
+		"mac": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "MAC address of the interface connected to this network.",
+		},
+
 	}
 
 	return rets
@@ -89,7 +130,7 @@ func makePortforwardsConfig(arg_list []interface{}) (pfws []PortforwardConfig, c
 	var subres_data map[string]interface{}
 	for index, value := range arg_list {
 		subres_data = value.(map[string]interface{})
-		pfws[index].Label = subres_data["label"].(string)
+		// pfws[index].Label = subres_data["label"].(string) - should be uncommented for future release
 		pfws[index].ExtPort = subres_data["ext_port"].(int)
 		pfws[index].IntPort = subres_data["int_port"].(int)
 		pfws[index].Proto = subres_data["proto"].(string)
@@ -101,11 +142,19 @@ func makePortforwardsConfig(arg_list []interface{}) (pfws []PortforwardConfig, c
 func flattenPortforwards(pfws []PortforwardRecord) []interface{} {
 	result := make([]interface{}, len(pfws))
 	elem := make(map[string]interface{})
+	var port_num int
 
 	for index, value := range pfws {
-		elem["label"] = "default"
-		elem["ext_port"] = value.ExtPort
-		elem["int_port"] = value.IntPort
+		// elem["label"] = ... - should be uncommented for the future release
+
+		// external port field is of TypeInt in the portforwardSubresourceSchema, but string is returned
+		// by portforwards/list API, so we need conversion here
+		port_num, _ = strconv.Atoi(value.ExtPort)
+		elem["ext_port"] =  port_num
+		// internal port field is of TypeInt in the portforwardSubresourceSchema, but string is returned
+		// by portforwards/list API, so we need conversion here
+		port_num, _ = strconv.Atoi(value.IntPort)
+		elem["int_port"] = port_num
 		elem["proto"] = value.Proto
 		elem["ext_ip"] = value.ExtIP
 		elem["int_ip"] = value.IntIP
@@ -117,11 +166,13 @@ func flattenPortforwards(pfws []PortforwardRecord) []interface{} {
 
 func portforwardSubresourceSchema() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema {
+		/* this should be uncommented for the future release
 		"label": {
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "Unique label of this network connection to identify it amnong other connections for this VM.",
 		},
+		*/
 		
 		"ext_port": {
 			Type:        schema.TypeInt,
@@ -138,7 +189,7 @@ func portforwardSubresourceSchema() map[string]*schema.Schema {
 		},
 
 		"proto": {
-			Type:        schema.TypeInt,
+			Type:        schema.TypeString,
 			Required:    true,
 			// ValidateFunc: validation.IntBetween(1, ),
 			Description: "Protocol type for this port forwarding rule. Should be either 'tcp' or 'udp'.",

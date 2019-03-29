@@ -66,7 +66,7 @@ type MachineConfig struct {
 
 type ResgroupQuotaConfig struct {
 	Cpu int
-	Ram int
+	Ram float32 // NOTE: it is float32! However, int would be enough here
 	Disk int
 	NetTraffic int
 	ExtIPs int

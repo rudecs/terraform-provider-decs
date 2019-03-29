@@ -21,6 +21,7 @@ import (
 
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/url"
 	// "strconv"
 
@@ -28,16 +29,17 @@ import (
 	// "github.com/hashicorp/terraform/helper/validation"
 )
 
-func (ctrl *ControllerCfg) utilityResgroupGetFacts(rgid int) (*ResgroupConfig, error) {
+func (ctrl *ControllerCfg) utilityResgroupConfigGet(rgid int) (*ResgroupConfig, error) {
 	url_values := &url.Values{}
 	url_values.Add("cloudspaceId", fmt.Sprintf("%d", rgid))
-	resp_string, err := ctrl.decsAPICall("POST", CloudspacesListAPI, url_values)
+	resgroup_facts, err := ctrl.decsAPICall("POST", CloudspacesGetAPI, url_values)
 	if err != nil {
 		return nil, err
 	}
 
+	log.Printf("utilityResgroupConfigGet: ready to unmarshal string %q", resgroup_facts)
 	model := CloudspacesGetResp{}
-	err = json.Unmarshal([]byte(resp_string), &model)
+	err = json.Unmarshal([]byte(resgroup_facts), &model)
 	if err != nil {
 		return nil, err
 	}
@@ -51,5 +53,8 @@ func (ctrl *ControllerCfg) utilityResgroupGetFacts(rgid int) (*ResgroupConfig, e
 	ret.ExtIP = model.ExtIP   // legacy field for VDC - this will eventually become obsoleted by true Resource Groups
 	// Quota ResgroupQuotaConfig
 	// Network NetworkConfig
+	log.Printf("utilityResgroupConfigGet: tenant ID %d, GridID %d, ExtIP %q", 
+	           model.TenantID, model.GridID, model.ExtIP)
+
 	return ret, nil
 }

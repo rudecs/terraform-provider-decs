@@ -60,13 +60,19 @@ func flattenVm(d *schema.ResourceData, vm_facts string) error {
 	}
 
 	if len(model.DataDisks) > 0 {
+		log.Printf("flattenVm: calling flattenDataDisks")
 		if err = d.Set("data_disks", flattenDataDisks(model.DataDisks)); err != nil {
 			return err
 		}
 	}
 
 	if len(model.NICs) > 0 {
+		log.Printf("flattenVm: calling flattenNICs")
 		if err = d.Set("nics", flattenNICs(model.NICs)); err != nil {
+			return err
+		}
+		log.Printf("flattenVm: calling flattenNetworks")
+		if err = d.Set("networks", flattenNetworks(model.NICs)); err != nil {
 			return err
 		}
 	}

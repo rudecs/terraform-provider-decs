@@ -92,7 +92,7 @@ type CloudspacesCreateParam struct {
 //
 type QuotaRecord struct {
 	Cpu int                `json:"CU_C"`
-	Ram int                `json:"CU_M"`
+	Ram float32            `json:"CU_M"` // NOTE: it is float32! Casting to int may be required when passing it to ResgroupConfig
 	Disk int               `json:"CU_D"`
 	NetTraffic int         `json:"CU_NP"`
 	ExtIPs int             `json:"CU_I"`
@@ -153,15 +153,15 @@ const MachineDeleteAPI = "/restmachine/cloudapi/machines/delete"
 // structures related to /cloudapi/machines/list API
 //
 type NicRecord struct {
-	Status string          `json:"status"`
-	MacAddress string      `json:"macAddress"`
-	ReferenceID string     `json:"referenceId"`
-	DeviceName string      `json:"deviceName"`
-	NicType string         `json:"type"`
-	Params string          `json:"params"`
-	NetworkID int          `json:"networkId"`
-	Guid string            `json:"guid"`
-	IPAddress string       `json:"ipAddress"`
+	Status string          `json:"status"`       // did not see any other values but ""
+	MacAddress string      `json:"macAddress"`   // example "52:54:00:00:2d:2a"
+	ReferenceID string     `json:"referenceId"`  // did not see any other values but ""
+	DeviceName string      `json:"deviceName"`   // internal: "vm-13578-00a0", external: "vm-13578-6-ext
+	NicType string         `json:"type"`         // "bridge" for int net, "PUBLIC" for ext net
+	Params string          `json:"params"`       // for ext net "gateway:176.118.165.1 externalnetworkId:6"
+	NetworkID int          `json:"networkId"`    // did not see any other values but 0
+	Guid string            `json:"guid"`         // did not see any other values but ""
+	IPAddress string       `json:"ipAddress"`    // example "176.118.165.25/24"
 }
 
 type MachineRecord struct {
@@ -246,12 +246,16 @@ type ImagesListResp []ImageRecord
 // structures related to /cloudapi/externalnetwork/list API
 //
 type ExtNetworkRecord struct {
-	IPRange string        `json:"name"`
-	ID uint                `json:"id"`
+	IPRange string       `json:"name"`
+	ID uint              `json:"id"`
 } 
 
-const  ExtNetworksListAPI = "/restmachine/cloudapi/externalnetwork/list"
-type ExtNetworksResp []ExtNetworkRecord
+const AccountExtNetworksListAPI = "/restmachine/cloudapi/externalnetwork/list"
+type AcountExtNetworksResp []ExtNetworkRecord
+
+//
+// Response of this call in current API version is just a list of attached network IDs
+const VmExtNetworksListAPI = "/restmachine/cloudapi/machines/listExternalNetworks"
 
 //
 // structures related to /cloudapi/accounts/list API
