@@ -64,7 +64,7 @@ func resourceResgroup() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Name of this resource group. Names are unique within the context of a tenant and case sensitive.",
+				Description: "Name of this resource group. Names are case sensitive and unique within the context of a tenant.",
 			},
 
 			"tenant": &schema.Schema {
@@ -74,6 +74,18 @@ func resourceResgroup() *schema.Resource {
 				Description: "Name of the tenant, which this resource group belongs to.",
 			},
 
+			"tenant_id": &schema.Schema {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Unique ID of the tenant, which this resource group belongs to.",
+			},
+
+			"grid_id": &schema.Schema {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Unique ID of the grid, where this resource group is deployed.",
+			},
+
 			"location": &schema.Schema {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -81,22 +93,20 @@ func resourceResgroup() *schema.Resource {
 				Description: "Name of the location where this resource group should exist.",
 			},
 
-			"quota_cpu": &schema.Schema {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "The quota on the total number of CPUs in this resource group.",
+			"public_ip": { // this may be obsoleted as new network segments and true resource groups are implemented
+				Type:          schema.TypeString,
+				Computed:      true,
+				Description:  "Public IP address of this resource group (if any).",
 			},
 
-			"quota_ram": &schema.Schema {
-				Type:        schema.TypeInt,
+			"quotas": {
+				Type:        schema.TypeList,
 				Optional:    true,
-				Description: "The quota on the total amount of RAM in this resource group, specified in MB.",
-			},
-
-			"quota_disk": &schema.Schema {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "The quota on the total volume of storage resources in this resource group, specified in GB.",
+				MaxItems:    1,
+				Elem:        &schema.Resource {
+					Schema:  quotasSubresourceSchema(),
+				},
+				Description: "Quotas on the resources for this resource group.",
 			},
 		},
 	}
