@@ -71,8 +71,8 @@ type CloudspacesListResp []CloudspaceRecord
 //
 // structures related to /cloudapi/cloudspaces/create API call
 //
-const CloudspacesCreateAPI= "/restmachine/cloudapi/cloudspaces/create"
-type CloudspacesCreateParam struct {
+const ResgroupCreateAPI= "/restmachine/cloudapi/cloudspaces/create"
+type ResgroupCreateParam struct {
 	TenantID int           `json:"accountId"`
 	Location string        `json:"location"`
 	Name string            `json:"name"`
@@ -129,6 +129,11 @@ type CloudspacesUpdateParam struct {
 	NetTraffic int         `json:"maxNetworkPeerTransfer"`
 	ExtIPs int             `json:"maxNumPublicIP"`
 }
+
+// 
+// structures related to /cloudapi/cloudspaces/delete API
+//
+const CloudspacesDeleteAPI = "/restmachine/cloudapi/cloudspaces/delete"
 
 //
 // structures related to /cloudapi/machines/create API

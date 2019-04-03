@@ -17,15 +17,94 @@ limitations under the License.
 package decs
 
 import (
-        "github.com/hashicorp/terraform/helper/schema"
+
+	"fmt"
+	"log"
+	"net/url"
+	"strconv"
+	
+	"github.com/hashicorp/terraform/helper/schema"
+
 )
 
 func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
+	rg := &ResgroupConfig{
+		Name:         d.Get("name").(string),
+		TenantName:   d.Get("tenant").(string),
+	}
+
+	// validate that we have all parameters required to create the new Resource Group
+	// location code is required to create new resource group
+	arg_value, arg_set := d.GetOk("location")
+	if arg_set {
+		rg.Location = arg_value.(string)
+	} else {
+		return  fmt.Errorf("Cannot create new resource group %q for tenant %q: missing location parameter.", 
+		                    rg.Name, rg.TenantName)
+	}
+	// tenant ID is required to create new resource group
+	// obtain Tenant ID by tenant name - it should not be zero on success
+	tenant_id, err := utilityGetTenantIdByName(rg.TenantName, m)
+	if err != nil {
+		return err
+	}
+	rg.TenantID = tenant_id
+
+	set_quotas := false
+	arg_value, arg_set = d.GetOk("quotas")
+	if arg_set {
+		log.Printf("resourceResgroupCreate: calling makeQuotaConfig")
+		rg.Quota, _ = makeQuotaConfig(arg_value.([]interface{}))
+		set_quotas = true
+	}
+
+	controller := m.(*ControllerCfg)
+	log.Printf("resourceResgroupCreate: called by user %q for Resource group name %q, for tenant  %q / ID %d, location %q",
+	            controller.getDecsUsername(),
+				rg.Name, d.Get("tenant"), rg.TenantID, rg.Location)
+				
+	url_values := &url.Values{}
+	url_values.Add("accountId", fmt.Sprintf("%d", rg.TenantID))
+	url_values.Add("name", rg.Name)
+	url_values.Add("location", rg.Location)
+	url_values.Add("access", controller.getDecsUsername())
+	// pass quota values if set
+	if set_quotas {
+		url_values.Add("maxCPUCapacity", fmt.Sprintf("%d", rg.Quota.Cpu))
+		url_values.Add("maxVDiskCapacity", fmt.Sprintf("%d", rg.Quota.Disk))
+		url_values.Add("maxMemoryCapacity", fmt.Sprintf("%f", rg.Quota.Ram))
+		url_values.Add("maxNetworkPeerTransfer", fmt.Sprintf("%d", rg.Quota.NetTraffic))
+		url_values.Add("maxNumPublicIP", fmt.Sprintf("%d", rg.Quota.ExtIPs))
+	}
+	// pass externalnetworkid if set
+	arg_value, arg_set = d.GetOk("extnet_id")
+	if arg_set {
+		url_values.Add("externalnetworkid", fmt.Sprintf("%d", arg_value))
+	}
+	
+	api_resp, err := controller.decsAPICall("POST", ResgroupCreateAPI, url_values)
+	if err != nil {
+		return err
+	}
+
+	d.SetId(api_resp) // cloudspaces/create API plainly returns ID of the newly creted resource group on success
+	rg.ID, _ = strconv.Atoi(api_resp)
+
 	return resourceResgroupRead(d, m)
 }
 
 func resourceResgroupRead(d *schema.ResourceData, m interface{}) error {
-	return nil // calling dataSourceResgroupRead(d, m) from here may not be the best idea - consider!
+	log.Printf("resourceResgroupRead: called for res group name %q, tenant name %q", 
+	           d.Get("name").(string), d.Get("tenant").(string))
+	rg_facts, err := utilityResgroupCheckPresence(d, m)
+	if rg_facts == "" {
+		// if empty string is returned from utilityResgroupCheckPresence then there is no
+		// such resource group and err tells so - just return it to the calling party 
+		d.SetId("") // ensure ID is empty
+		return err
+	}
+
+	return flattenResgroup(d, rg_facts)
 }
 
 func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
@@ -33,11 +112,37 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceResgroupDelete(d *schema.ResourceData, m interface{}) error {
+	// NOTE: this method destroys target resource group with flag "permanently", so there is no way to
+	// restore the destroyed resource group as well all VMs that existed in it
+	vm_facts, err := utilityResgroupCheckPresence(d, m)
+	if vm_facts == "" {
+		// the target VM does not exist - in this case according to Terraform best practice 
+		// we exit from Destroy method without error
+		return nil
+	}
+
+	params := &url.Values{}
+	params.Add("cloudspaceId", d.Id())
+	params.Add("permanently", "true")
+
+	controller := m.(*ControllerCfg)
+	vm_facts, err = controller.decsAPICall("POST", CloudspacesDeleteAPI, params)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func resourceResgroupExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	// Reminder: according to Terraform rules, this function should not modify ResourceData argument
+	rg_facts, err := utilityResgroupCheckPresence(d, m)
+	if rg_facts == "" {
+		if err != nil {
+			return false, err
+		}
+		return false, nil
+	}
 	return true, nil
 }
 
@@ -63,15 +168,19 @@ func resourceResgroup() *schema.Resource {
 			"name": &schema.Schema {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Name of this resource group. Names are case sensitive and unique within the context of a tenant.",
 			},
 
 			"tenant": &schema.Schema {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Name of the tenant, which this resource group belongs to.",
+			},
+
+			"extnet_id": &schema.Schema {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "ID of the external network, which this resource group will be connected to by default.",
 			},
 
 			"tenant_id": &schema.Schema {
@@ -88,7 +197,7 @@ func resourceResgroup() *schema.Resource {
 
 			"location": &schema.Schema {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true, // note that it is a REQUIRED parameter when creating new resource group
 				ForceNew:    true,
 				Description: "Name of the location where this resource group should exist.",
 			},

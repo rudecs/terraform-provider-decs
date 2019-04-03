@@ -174,6 +174,10 @@ func ControllerConfigure(d *schema.ResourceData) (*ControllerCfg, error) {
 	return ret_config, nil
 }
 
+func (config *ControllerCfg) getDecsUsername() (string) {
+	return config.decs_username
+}
+
 func (config *ControllerCfg) getOAuth2JWT() (string, error) {
 	// 	Obtain JWT from the Oauth2 provider using application ID and application secret provided in config.
 	if config.auth_mode_code == MODE_UNDEF {

@@ -22,71 +22,51 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/url"
+	// "net/url"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	// "github.com/hashicorp/terraform/helper/validation"
 
 )
 
+func flattenResgroup(d *schema.ResourceData, rg_facts string) error {
+	// NOTE: this function modifies ResourceData argument - as such it should never be called
+	// from resourceRsgroupExists(...) method
+	log.Printf("%s", rg_facts)
+	log.Printf("flattenResgroup: ready to decode response body from %q", CloudspacesGetAPI)
+	details := CloudspacesGetResp{}
+	err := json.Unmarshal([]byte(rg_facts), &details)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("flattenResgroup: decoded ResGroup name %q / ID %d, tenant ID %d, public IP %q", 
+				details.Name, details.ID, details.TenantID, details.PublicIP)
+
+	d.SetId(fmt.Sprintf("%d", details.ID))
+	d.Set("name", details.Name)
+	d.Set("tenant_id", details.TenantID)
+	d.Set("grid_id", details.GridID)
+	d.Set("public_ip", details.PublicIP) // legacy field - this may be obsoleted when new network segments are implemented
+
+	log.Printf("flattenResgroup: calling flattenQuota()")
+	if err = d.Set("quotas", flattenQuota(details.Quotas)); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func dataSourceResgroupRead(d *schema.ResourceData, m interface{}) error {
-	name := d.Get("name").(string)
-	tenant_name := d.Get("tenant").(string)
-
-	controller := m.(*ControllerCfg)
-	url_values := &url.Values{}
-	body_string, err := controller.decsAPICall("POST", CloudspacesListAPI, url_values)
-	if err != nil {
+	rg_facts, err := utilityResgroupCheckPresence(d, m)
+	if rg_facts == "" {
+		// if empty string is returned from utilityResgroupCheckPresence then there is no
+		// such resource group and err tells so - just return it to the calling party 
+		d.SetId("") // ensure ID is empty
 		return err
 	}
 
-	log.Printf("%s", body_string)
-	log.Printf("dataSourceResgroupRead: ready to decode response body from %q", CloudspacesListAPI)
-	model := CloudspacesListResp{}
-	err = json.Unmarshal([]byte(body_string), &model)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("dataSourceResgroupRead: traversing decoded Json of length %d", len(model))
-	for index, item := range model {
-		// need to match VDC by name & tenant name
-		if item.Name == name && item.TenantName == tenant_name {
-			log.Printf("dataSourceResgroupRead: match ResGroup name %q / ID %d, tenant %q at index %d", 
-			           item.Name, item.ID, item.TenantName, index)
-			d.SetId(fmt.Sprintf("%d", item.ID))
-			d.Set("name", item.Name)
-			d.Set("tenant_id", item.TenantID)
-			d.Set("grid_id", item.GridID)
-			d.Set("public_ip", item.PublicIP)
-
-			// not all required information is returned by cloudspaces/list API, so we need to initiate one more
-			// call to cloudspaces/get to obtain extra data to complete Resource population.
-			// Namely, we need to extract resource quota settings
-			req_values := &url.Values{} 
-			req_values.Add("cloudspaceId", fmt.Sprintf("%d", item.ID))
-			body_string, err := controller.decsAPICall("POST", CloudspacesGetAPI, req_values)
-			if err != nil {
-				return err
-			}
-			log.Printf("%s", body_string)
-			log.Printf("dataSourceResgroupRead: ready to decode response body from %q", CloudspacesGetAPI)
-			details := CloudspacesGetResp{}
-			err = json.Unmarshal([]byte(body_string), &details)
-			if err != nil {
-				return err
-			}
-			log.Printf("dataSourceResgroupRead: calling flattenQuotas()")
-			if err = d.Set("quotas", flattenQuotas(details.Quotas)); err != nil {
-				return err
-			}
-
-			return nil
-		}
-	}
-
-	return fmt.Errorf("Cannot find resource group name %q owned by tenant %q", name, tenant_name)
+	return flattenResgroup(d, rg_facts)
 }
 
 
@@ -149,51 +129,4 @@ func dataSourceResgroup() *schema.Resource {
 			},
 		},
 	}
-}
-
-func flattenQuotas(quotas QuotaRecord) []interface{} {
-	quotas_map :=  make(map[string]interface{})
-
-	quotas_map["cpu"] = quotas.Cpu
-	quotas_map["ram"] = int(quotas.Ram)
-	quotas_map["disk"] = quotas.Disk
-	quotas_map["ext_ips"] = quotas.ExtIPs
-
-	result := make([]interface{}, 1)
-	result[0] = quotas_map
-
-	return result
-}
-
-func quotasSubresourceSchema() map[string]*schema.Schema {
-	rets := map[string]*schema.Schema {
-		"cpu": &schema.Schema {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Default:     -1,
-			Description: "The quota on the total number of CPUs in this resource group.",
-		},
-
-		"ram": &schema.Schema {
-			Type:        schema.TypeInt, // NB: API expects this as float! This may be changed in the future.
-			Optional:    true,
-			Default:     -1,
-			Description: "The quota on the total amount of RAM in this resource group, specified in MB.",
-			},
-
-		"disk": &schema.Schema {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Default:     -1,
-			Description: "The quota on the total volume of storage resources in this resource group, specified in GB.",
-		},
-
-		"ext_ips": &schema.Schema {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Default:     -1,
-			Description: "The quota on the total number of external IP addresses this resource group can use.",
-		},
-	}
-	return rets
 }

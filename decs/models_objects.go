@@ -74,6 +74,7 @@ type ResgroupQuotaConfig struct {
 
 type ResgroupConfig struct {
 	TenantID int
+	TenantName string
 	Location string
 	Name string
 	ID int
