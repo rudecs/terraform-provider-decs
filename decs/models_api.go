@@ -88,6 +88,11 @@ type ResgroupCreateParam struct {
 } 
 
 //
+// structures related to /cloudapi/cloudspaces/update API call
+//
+const ResgroupUpdateAPI= "/restmachine/cloudapi/cloudspaces/update"
+
+//
 // structures related to /cloudapi/cloudspaces/get API call
 //
 type QuotaRecord struct {

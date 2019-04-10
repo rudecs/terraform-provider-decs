@@ -28,6 +28,9 @@ import (
 )
 
 func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
+	log.Printf("resourceResgroupCreate: called for res group name %q, tenant name %q", 
+			   d.Get("name").(string), d.Get("tenant").(string))
+			   
 	rg := &ResgroupConfig{
 		Name:         d.Get("name").(string),
 		TenantName:   d.Get("tenant").(string),
@@ -68,7 +71,7 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 	url_values.Add("name", rg.Name)
 	url_values.Add("location", rg.Location)
 	url_values.Add("access", controller.getDecsUsername())
-	// pass quota values if set
+	// pass quota values as set
 	if set_quotas {
 		url_values.Add("maxCPUCapacity", fmt.Sprintf("%d", rg.Quota.Cpu))
 		url_values.Add("maxVDiskCapacity", fmt.Sprintf("%d", rg.Quota.Disk))
@@ -108,12 +111,77 @@ func resourceResgroupRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
+	// this method will only update quotas, if any are set
+	log.Printf("resourceResgroupUpdate: called for res group name %q, tenant name %q", 
+			   d.Get("name").(string), d.Get("tenant").(string))
+
+	quota_value, arg_set := d.GetOk("quotas")
+	if !arg_set {
+		// if there are no quotas set explicitly in the resource configuration - no change will be done
+		log.Printf("resourceResgroupUpdate: quotas are not set in the resource config - no update on this resource will be done")
+		return resourceResgroupRead(d, m)
+	}
+	quotaconfig_new, _ := makeQuotaConfig(quota_value.([]interface{}))
+
+	quota_value, _ = d.GetChange("quotas") // returns old as 1st, new as 2nd argument
+	quotaconfig_old, _ := makeQuotaConfig(quota_value.([]interface{}))
+
+	controller := m.(*ControllerCfg)
+	url_values := &url.Values{}
+	url_values.Add("cloudspaceId", d.Id())
+	url_values.Add("name", d.Get("name").(string))
+	
+	do_update := false
+
+	if quotaconfig_new.Cpu != quotaconfig_old.Cpu {
+		do_update = true
+		log.Printf("resourceResgroupUpdate: Cpu diff %d <- %d", quotaconfig_new.Cpu, quotaconfig_old.Cpu)
+		url_values.Add("maxCPUCapacity", fmt.Sprintf("%d", quotaconfig_new.Cpu))
+	}
+
+	if quotaconfig_new.Disk != quotaconfig_old.Disk {
+		do_update = true
+		log.Printf("resourceResgroupUpdate: Disk diff %d <- %d", quotaconfig_new.Disk, quotaconfig_old.Disk)
+		url_values.Add("maxVDiskCapacity", fmt.Sprintf("%d", quotaconfig_new.Disk))
+	}
+
+	if quotaconfig_new.Ram != quotaconfig_old.Ram {
+		do_update = true
+		log.Printf("resourceResgroupUpdate: Ram diff %f <- %f", quotaconfig_new.Ram, quotaconfig_old.Ram)
+		url_values.Add("maxMemoryCapacity", fmt.Sprintf("%f", quotaconfig_new.Ram))
+	}
+
+	if quotaconfig_new.NetTraffic != quotaconfig_old.NetTraffic {
+		do_update = true
+		log.Printf("resourceResgroupUpdate: NetTraffic diff %d <- %d", quotaconfig_new.NetTraffic, quotaconfig_old.NetTraffic)
+		url_values.Add("maxNetworkPeerTransfer", fmt.Sprintf("%d", quotaconfig_new.NetTraffic))
+	}
+
+	if quotaconfig_new.ExtIPs != quotaconfig_old.ExtIPs {
+		do_update = true
+		log.Printf("resourceResgroupUpdate: ExtIPs diff %d <- %d", quotaconfig_new.ExtIPs, quotaconfig_old.ExtIPs)
+		url_values.Add("maxNumPublicIP", fmt.Sprintf("%d", quotaconfig_new.ExtIPs))
+	}
+
+	if do_update {
+		log.Printf("resourceResgroupUpdate: some new quotas are set - updating the resource")
+		_, err := controller.decsAPICall("POST", ResgroupUpdateAPI, url_values)
+		if err != nil {
+			return err
+		}
+	} else {
+		log.Printf("resourceResgroupUpdate: no difference in quotas between old and new state - no update on this resource will be done")
+	}
+	
 	return resourceResgroupRead(d, m)
 }
 
 func resourceResgroupDelete(d *schema.ResourceData, m interface{}) error {
 	// NOTE: this method destroys target resource group with flag "permanently", so there is no way to
 	// restore the destroyed resource group as well all VMs that existed in it
+	log.Printf("resourceResgroupDelete: called for res group name %q, tenant name %q", 
+			   d.Get("name").(string), d.Get("tenant").(string))
+
 	vm_facts, err := utilityResgroupCheckPresence(d, m)
 	if vm_facts == "" {
 		// the target VM does not exist - in this case according to Terraform best practice 

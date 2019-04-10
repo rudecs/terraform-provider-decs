@@ -208,8 +208,9 @@ func resourceVmCreate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceVmRead(d *schema.ResourceData, m interface{}) error {
-	log.Printf("resourceVmRead: called for VM ID %s, VM name %q, ResGroupID %d", 
-	           d.Id(), d.Get("name").(string), d.Get("rgid").(int))
+	log.Printf("resourceVmRead: called for VM name %q, ResGroupID %d", 
+	           d.Get("name").(string), d.Get("rgid").(int))
+	
 	vm_facts, err := utilityVmCheckPresence(d, m)
 	if vm_facts == "" {
 		if err != nil {
@@ -284,12 +285,18 @@ func resourceVmRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceVmUpdate(d *schema.ResourceData, m interface{}) error {
+	log.Printf("resourceVmUpdate: called for VM name %q, ResGroupID %d", 
+			   d.Get("name").(string), d.Get("rgid").(int))
+			   
 	return resourceVmRead(d, m)
 }
 
 func resourceVmDelete(d *schema.ResourceData, m interface{}) error {
 	// NOTE: this method destroys target VM with flag "permanently", so there is no way to
 	// restore destroyed VM
+	log.Printf("resourceVmDelete: called for VM name %q, ResGroupID %d", 
+	           d.Get("name").(string), d.Get("rgid").(int))
+			   
 	vm_facts, err := utilityVmCheckPresence(d, m)
 	if vm_facts == "" {
 		// the target VM does not exist - in this case according to Terraform best practice 
@@ -312,6 +319,9 @@ func resourceVmDelete(d *schema.ResourceData, m interface{}) error {
 
 func resourceVmExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	// Reminder: according to Terraform rules, this function should not modify its ResourceData argument
+	log.Printf("resourceVmExist: called for VM name %q, ResGroupID %d", 
+			   d.Get("name").(string), d.Get("rgid").(int))
+			   
 	vm_facts, err := utilityVmCheckPresence(d, m)
 	if vm_facts == "" {
 		if err != nil {
@@ -344,14 +354,12 @@ func resourceVm() *schema.Resource {
 			"name": {
 				Type:          schema.TypeString,
 				Required:      true,
-				ForceNew:      true,
 				Description:  "Name of this virtual machine. This parameter is case sensitive.",
 			},
 
 			"rgid": {
 				Type:         schema.TypeInt,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.IntAtLeast(1),
 				Description:  "ID of the resource group where this virtual machine should be deployed.",
 			},

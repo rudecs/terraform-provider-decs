@@ -49,11 +49,11 @@ func makeQuotaConfig(arg_list []interface{}) (ResgroupQuotaConfig, int) {
 
 	if subres_data["ram"].(int) > 0 {
 		ram_limit := subres_data["ram"].(int)
-		quota.Ram = float32(ram_limit)/1024 // legacy fix - this can be obsoleted once redmine FR #1465 is implemented
+		quota.Ram = float32(ram_limit) // /1024 // legacy fix - this can be obsoleted once redmine FR #1465 is implemented
 	}
 
 	if subres_data["net_traffic"].(int) > 0 {
-		quota.NetTraffic = subres_data["cpu"].(int)
+		quota.NetTraffic = subres_data["net_traffic"].(int)
 	}
 
 	if subres_data["ext_ips"].(int) > 0 {
@@ -69,6 +69,7 @@ func flattenQuota(quotas QuotaRecord) []interface{} {
 	quotas_map["cpu"] = quotas.Cpu
 	quotas_map["ram"] = int(quotas.Ram)
 	quotas_map["disk"] = quotas.Disk
+	quotas_map["net_traffic"] = quotas.NetTraffic
 	quotas_map["ext_ips"] = quotas.ExtIPs
 
 	result := make([]interface{}, 1)
@@ -90,7 +91,7 @@ func quotasSubresourceSchema() map[string]*schema.Schema {
 			Type:        schema.TypeInt, // NB: API expects and returns this as float! This may be changed in the future.
 			Optional:    true,
 			Default:     -1,
-			Description: "The quota on the total amount of RAM in this resource group, specified in MB.",
+			Description: "The quota on the total amount of RAM in this resource group, specified in GB (Gigabytes!).",
 			},
 
 		"disk": &schema.Schema {
