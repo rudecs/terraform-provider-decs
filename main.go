@@ -22,7 +22,7 @@ import (
 	"github.com/hashicorp/terraform/plugin"
 	"github.com/hashicorp/terraform/terraform"
 
-	"terraform-plugin-decs/decs"
+	"terraform-provider-decs/decs"
 )
 
 func main() {
