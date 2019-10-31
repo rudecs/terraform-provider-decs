@@ -35,10 +35,10 @@ func dataSourceImageRead(d *schema.ResourceData, m interface{}) error {
 
 	controller := m.(*ControllerCfg)
 	url_values := &url.Values{}
-	if rgid_set {
+	if tenant_set {
 		url_values.Add("accountId", fmt.Sprintf("%d",tenant_id.(int)))
 	}
-	if tenant_set {
+	if rgid_set {
 		url_values.Add("cloudspaceId", fmt.Sprintf("%d",rgid.(int)))
 	}
 	body_string, err := controller.decsAPICall("POST", ImagesListAPI, url_values)
