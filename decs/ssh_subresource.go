@@ -37,6 +37,7 @@ func makeSshKeysConfig(arg_list []interface{}) (sshkeys []SshKeyConfig, count in
 		subres_data = value.(map[string]interface{})
 		sshkeys[index].User = subres_data["user"].(string)
 		sshkeys[index].SshKey = subres_data["public_key"].(string)
+		sshkeys[indes].UserShell = subres_data["shell"].(string)
 	}
 
 	return sshkeys, count
@@ -45,21 +46,27 @@ func makeSshKeysConfig(arg_list []interface{}) (sshkeys []SshKeyConfig, count in
 func makeSshKeysArgString(sshkeys []SshKeyConfig) string {
 	// Prepare a string with username and public ssh key value in a format recognized by cloud-init utility.
 	// It is designed to be passed as "userdata" argument of virtual machine create API call.
-	const UserdataTemplate =
+	// The following format is expected:
+	// '{"users": [{"ssh-authorized-keys": ["SSH_PUBCIC_KEY_VALUE"], "shell": "SHELL_VALUE", "name": "USERNAME_VALUE"}, {...}, ]}'
+	
+	/*
 	`%s\n
 	  - name: %s\n
 		ssh-authorized-keys:
 		- %s\n
 		shell: /bin/bash`
-	
+	*/
 	if len(sshkeys) < 1 {
 		return ""
 	}
 
-	out := "users:"
+	out := `{"users": [`
+	const UserdataTemplate = `%s{"ssh-authorized-keys": ["%s"], "shell": "%s", "name": "%s"}, `
+	const out_suffix = `]}`
 	for _, elem := range sshkeys {
-		out = fmt.Sprintf(UserdataTemplate, out, elem.User, elem.SshKey)
+		out = fmt.Sprintf(UserdataTemplate, out, elem.SshKey, elem.UserShell, elem.User)
 	}
+	out = fmt.Sprintf("%s %s", out, out_suffix)
 	return out
 }
 

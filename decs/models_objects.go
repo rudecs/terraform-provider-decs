@@ -40,6 +40,7 @@ type PortforwardConfig struct {
 type SshKeyConfig struct {
 	User string
 	SshKey string
+	UserShell string
 }
 
 type MachineConfig struct {
