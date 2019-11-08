@@ -37,7 +37,7 @@ func makeSshKeysConfig(arg_list []interface{}) (sshkeys []SshKeyConfig, count in
 		subres_data = value.(map[string]interface{})
 		sshkeys[index].User = subres_data["user"].(string)
 		sshkeys[index].SshKey = subres_data["public_key"].(string)
-		sshkeys[indes].UserShell = subres_data["shell"].(string)
+		sshkeys[index].UserShell = subres_data["shell"].(string)
 	}
 
 	return sshkeys, count
