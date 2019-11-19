@@ -15,6 +15,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+/*
+Terraform DECS provider - manage resources in Digital Energy Cloud Services platform
+with terraform.
+
+Source code: https://github.com/rudecs/terraform-provider-decs
+
+Please see README.md to learn where to place source code so that it
+builds seamlessly.
+
+Documentation: https://github.com/rudecs/terraform-provider-decs/wiki
+*/
+
 package main
 
 import (
@@ -22,7 +34,7 @@ import (
 	"github.com/hashicorp/terraform/plugin"
 	"github.com/hashicorp/terraform/terraform"
 
-	"terraform-provider-decs/decs"
+	"github.com/terraform-provider-decs/decs"
 )
 
 func main() {
