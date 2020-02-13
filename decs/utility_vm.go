@@ -29,18 +29,27 @@ import (
 )
 
 func (ctrl *ControllerCfg) utilityVmDisksProvision(mcfg *MachineConfig) error {
+	// Note: this function works on DataDisks component of VM config, so every disk
+	// provisioned by this function is of type "D"
 	for index, disk := range mcfg.DataDisks {
-		url_values := &url.Values{}
+		ddesc := fmt.Sprintf("%s", disk.Description)
+		if ddesc == "" {
+			ddesc = fmt.Sprintf("Data disk for VM ID %d / VM Name: %s", mcfg.ID, mcfg.Name)
+		}
+		
+		url_values1 := &url.Values{}
 		// url_values.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
-		url_values.Add("accountId", fmt.Sprintf("%d", mcfg.TenantID))
-		url_values.Add("gid", fmt.Sprintf("%d", mcfg.GridID))
-		url_values.Add("name", fmt.Sprintf("%s", disk.Label))
-		url_values.Add("description", fmt.Sprintf("Data disk for VM ID %d / VM Name: %s", mcfg.ID, mcfg.Name))
-		url_values.Add("size", fmt.Sprintf("%d", disk.Size))
-		url_values.Add("type", "D")
+		url_values1.Add("accountId", fmt.Sprintf("%d", mcfg.TenantID))
+		url_values1.Add("gid", fmt.Sprintf("%d", mcfg.GridID))
+		url_values1.Add("name", fmt.Sprintf("%s", disk.Label))
+		url_values1.Add("description", ddesc)
+		url_values1.Add("size", fmt.Sprintf("%d", disk.Size))
+		url_values1.Add("type", "D")  // hard-code for "Data" disk type; however, Disk subresource schema allows for type option
+		url_values1.Add("sep_id", fmt.Sprintf("%d", disk.SepId))
+		url_values1.Add("pool", fmt.Sprintf("%s", disk.Pool))
 		// url_values.Add("iops", )
 
-		disk_id_resp, err := ctrl.decsAPICall("POST", DiskCreateAPI, url_values)
+		disk_id_resp, err := ctrl.decsAPICall("POST", DiskCreateAPI, url_values1)
 		if err != nil {
 			// failed to create disk - partial resource update
 			return err
@@ -56,11 +65,10 @@ func (ctrl *ControllerCfg) utilityVmDisksProvision(mcfg *MachineConfig) error {
 
 		// now that we have disk created and stored its ID in the mcfg.DataDisks[index].ID
 		// we can attempt attaching the disk to the VM
-		url_values = &url.Values{}
-		// url_values.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
-		url_values.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
-		url_values.Add("diskId", disk_id_resp)
-		_, err = ctrl.decsAPICall("POST", DiskAttachAPI, url_values)
+		url_values2 := &url.Values{}
+		url_values2.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
+		url_values2.Add("diskId", disk_id_resp)
+		_, err = ctrl.decsAPICall("POST", DiskAttachAPI, url_values2)
 		if err != nil {
 			// failed to attach disk - partial resource update
 			return err

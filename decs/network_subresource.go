@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2020 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,16 +91,22 @@ func networkSubresourceSchema() map[string]*schema.Schema {
 		"network_id": {
 			Type:        schema.TypeInt,
 			Required:    true,
-			ValidateFunc: validation.IntAtLeast(1),
-			Description: "ID of the network to attach to this VM.",
+			ValidateFunc: validation.IntAtLeast(1), // to attach to default ViNS or ext net we should allow zero network id.
+			Description: "ID of the network to attach this VM to.",
 		},
 
-		/* should be uncommented for the future release
+		/* uncomment and elaborate for the RG & ViNS release
 		"label": {
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "Unique label of this network connection to identify it among other connections for this VM.",
 		},
+
+		"type": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "Type of the network to connect to. Specify one of 'VINS' or 'EXTNET'."
+		}
 		*/
 
 		"ip_range": {

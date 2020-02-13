@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2020 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,8 +26,11 @@ import (
 )
 
 func makeDisksConfig(arg_list []interface{}) (disks []DiskConfig, count int) {
+	// This method takes a list of disk definitions, coming from the corresponding
+	// schema, and populates a list of DiskConfig structures according to these 
+	// definitions.
 	count = len(arg_list) 
-	if count < 1 {
+	if count < 1 { 
 		return nil, 0
 	}
 
@@ -39,16 +42,18 @@ func makeDisksConfig(arg_list []interface{}) (disks []DiskConfig, count int) {
 		disks[index].Label = subres_data["label"].(string)
 		disks[index].Size = subres_data["size"].(int)
 		disks[index].Pool = subres_data["pool"].(string)
-		disks[index].Provider = subres_data["provider"].(string)
+		disks[index].SepId = subres_data["sep_id"].(int)
+		disks[index].Description = subres_data["descr"].(string)
+		disks[index].Type = subres_data["type"].(string)
 	}
 
 	return disks, count
 }
 
-func flattenDataDisks(disks []DataDiskRecord) []interface{} {
+func flattenDataDisks(disks []GenericDiskRecord) []interface{} {
 	var length = 0
 	for _, value := range disks {
-		if value.DiskType == "D" {
+		if value.Type == "D" {
 			length += 1
 		}
 	}
@@ -63,12 +68,14 @@ func flattenDataDisks(disks []DataDiskRecord) []interface{} {
 
 	var subindex = 0
 	for _, value := range disks {
-		if value.DiskType == "D" {
+		if value.Type == "D" {
 			elem["label"] = value.Label
 			elem["size"] = value.SizeMax
 			elem["disk_id"] = value.ID
-			elem["pool"] = "default"
-			elem["provider"] = "default"
+			elem["pool"] = value.Pool
+			elem["sep_id"] = value.SepId
+			elem["type"] = value.Type
+			elem["descr"] = value.Description
 			result[subindex] = elem
 			subindex += 1
 		}
@@ -91,37 +98,51 @@ func makeDataDisksArgString(disks []DiskConfig) string {
 
 func diskSubresourceSchema() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema {
-		"label": {
-			Type:        schema.TypeString,
-			Required:    true,
-			Description: "Unique label to identify this disk among other disks connected to this VM.",
-		},
-
-		"size": {
-			Type:        schema.TypeInt,
-			Required:    true,
-			ValidateFunc: validation.IntAtLeast(1),
-			Description: "Size of the disk in GB.",
-		},
-
-		"pool": {
+		"descr": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Default:     "default",
-			Description: "Pool from which this disk should be provisioned.",
-		},
-
-		"provider": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Default:     "default",
-			Description: "Storage provider (storage technology type) by which this disk should be served.",
+			Default:     "",
+			Description: "Description for this disk.",
 		},
 
 		"disk_id": {
 			Type:        schema.TypeInt,
 			Computed:    true,
 			Description: "ID of this disk resource.",
+		},
+
+		"label": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "Unique label to identify this disk among other disks connected to this VM.",
+		},
+
+		"pool": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Default:     "default", // each SEP should implement "default" pool functionality
+			Description: "Pool from which this disk should be provisioned.",
+		},
+
+		"sep_id": {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Default:     1,
+			Description: "ID of the Storage End-point provider (SEP) by which this disk should be served.",
+		},
+
+		"size": {
+			Type:        schema.TypeInt,
+			Required:    true,
+			ValidateFunc: validation.IntAtLeast(1),
+			Description: "Size of the disk in GB. For boot disks is should be enough to accomodate selected OS image.",
+		},
+
+		"type": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Default:     "D", // by default Data disks are created
+			Description: "Type of disk to create. D for data (default), B for boot.",
 		},
 		
 	}

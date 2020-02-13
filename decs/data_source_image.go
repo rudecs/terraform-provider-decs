@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2020 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,8 @@ func dataSourceImageRead(d *schema.ResourceData, m interface{}) error {
 	name := d.Get("name").(string)
 	rgid, rgid_set := d.GetOk("rgid")
 	tenant_id, tenant_set := d.GetOk("tenant_id")
+	sep_id, sep_set := d.GetOk("sep_id")
+	pool, pool_set := d.GetOk("pool")
 
 	controller := m.(*ControllerCfg)
 	url_values := &url.Values{}
@@ -56,10 +58,20 @@ func dataSourceImageRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("%#v", model)
 	log.Printf("dataSourceImageRead: traversing decoded JSON of length %d", len(model))
 	for index, item := range model {
-		// need to match VM by name
+		// first try to match OS image by name
 		if item.Name == name {
+			// if pool name is specified and validated, then do extra match by pool name
+			if pool_set && pool != item.Pool { 
+				continue
+			}
+			// if SEP ID is specified and validated, then do extra match by SEP ID
+			if sep_set && sep_id != item.SepId {
+				continue
+			}
 			log.Printf("dataSourceImageRead: index %d, matched name %q", index, item.Name)
-			d.SetId(fmt.Sprintf("%d", model[index].ID))
+			d.SetId(fmt.Sprintf("%d", item.ID))
+			d.Set("sep_id", item.SepId) // make sure SEP ID of the matched OS image is written back to schema
+			d.Set("pool", item.Pool)    // make sure pool name of the matched OS image is written back to schema
 			// d.Set("field_name", value)
 			return nil
 		}
@@ -83,14 +95,29 @@ func dataSourceImage() *schema.Resource {
 			"name": {
 				Type:          schema.TypeString,
 				Required:      true,
-				Description:  "Name of the OS image to locate. This parameter is case sensitive.",
+				ValidateFunc:  validation.StringLenBetween(1,128),
+				Description:  "Name of the OS image to find. This parameter is case sensitive.",
+			},
+
+			"pool": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ValidateFunc:  validation.StringLenBetween(1,64),
+				Decsription:   "Name of the pool, where the OS image should be found.",
+			},
+
+			"sep_id": {
+				Type:          schema.TypeInt,
+				Optional:      true,
+				ValidateFunc:  validation.IntAtLeast(1),
+				Decsription:   "ID of the SEP, where the OS image should be found.",
 			},
 
 			"tenant_id": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				ValidateFunc: validation.IntAtLeast(1),
-				Description:  "ID of the tenant to limit image search to.",
+				Description:  "ID of the tenant to limit OS image search to.",
 			},
 
 			"rgid": {

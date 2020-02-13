@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2020 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -197,14 +197,21 @@ type MachinesListResp []MachineRecord
 //
 // structures related to /cloudapi/machines/get
 //
-type DataDiskRecord struct {
+type GenericDiskRecord struct {
 	Status string          `json:"status"`
 	SizeMax int            `json:"sizeMax"`
 	Label string           `json:"name"`
 	Description string     `json:"descr"`
 	Acl map[string]string  `json:"acl"`
-	DiskType string        `json:"type"`
+	Type string            `json:"type"`
 	ID uint                `json:"id"`
+	SepId int              `json:"sepid"`
+	Pool string            `json:"pool"`
+	AccountId int          `json:"accountId"`
+	VmId int               `json:"vmid"`
+	ParentId uint          `json:"parentId"`
+	TechStatus string      `json:"techStatus"`
+	ImageId int            `json:"imageId"`
 }
 
 type GuestLoginRecord struct {
@@ -215,24 +222,24 @@ type GuestLoginRecord struct {
 
 const MachinesGetAPI = "/restmachine/cloudapi/machines/get"
 type MachinesGetResp struct {
-	ResGroupID uint        `json:"cloudspaceid"` // note that "id" is not capitalized in "cloudspaceid"
-	Status string          `json:"status"`
-	UpdateTime uint64      `json:"updateTime"`
-	Hostname string        `json:"hostname"`
-	IsLocked bool          `json:"locked"`
-	Name string            `json:"name"`
-	CreateTime uint64      `json:"creationTime"`
-	SizeID uint            `json:"sizeid"`
-	Cpu int                `json:"vcpus"`
-	Ram int                `json:"memory"`
-	BootDisk int           `json:"storage"`
-	DataDisks []DataDiskRecord `json:"disks"`
-	NICs []NicRecord       `json:"interfaces"`
+	ResGroupID uint           `json:"cloudspaceid"` // note that "id" is not capitalized in "cloudspaceid"
+	Status string             `json:"status"`
+	UpdateTime uint64         `json:"updateTime"`
+	Hostname string           `json:"hostname"`
+	IsLocked bool             `json:"locked"`
+	Name string               `json:"name"`
+	CreateTime uint64         `json:"creationTime"`
+	SizeID uint               `json:"sizeid"`
+	Cpu int                   `json:"vcpus"`
+	Ram int                   `json:"memory"`
+	BootDisk int              `json:"storage"` // this is requested boot disk size in GB, not boot disk ID
+	Disks []GenericDiskRecord `json:"disks"`   // all disks associated with this VM, boot & data
+	NICs []NicRecord          `json:"interfaces"`
 	GuestLogins []GuestLoginRecord `json:"accounts"`
-	ImageName string       `json:"osImage"`
-	ImageID int            `json:"imageid"`
-	Description string     `json:"description"`
-	ID uint                `json:"id"`
+	ImageName string          `json:"osImage"`
+	ImageID int               `json:"imageid"`
+	Description string        `json:"description"`
+	ID uint                   `json:"id"`
 }
 
 //
@@ -244,9 +251,11 @@ type ImageRecord struct {
 	Description string  `json:"description"`
 	TenantID uint       `json:"accountId"`
 	Size int            `json:"size"`
-	ImageType string    `json:"type"`
+	Type string         `json:"type"`
 	ID uint             `json:"id"`
 	Name string         `json:"name"`
+	SepId int           `json:"sepid"`
+	Pool string         `json:"pool"`
 }
 
 const ImagesListAPI = "/restmachine/cloudapi/images/list"

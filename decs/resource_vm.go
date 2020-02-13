@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2020 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,16 +50,37 @@ func resourceVmCreate(d *schema.ResourceData, m interface{}) error {
 	var subres_data map[string]interface{}
 	var arg_value interface{}
 	var arg_set bool
+
+	controller := m.(*ControllerCfg)
+
+	// NOTE on extra arguments to create disk 
+	//
+	// Since the introduction of DECORT Storage Framework in DECORT platform ver 3.3.5, two 
+	// additional parameters are required to create a disk (Boot, Data or any future disk type):
+	//  * SEP ID - ID of the Storage End-point provider, where the disk will be provisioned from.
+	//  * pool - name of the pool on SEP where the disk should be placed in.
+	// However, until the advent of DECORT API ver 2.0 this is made transparent to the user
+	// by taking SEP ID and pool from the OS image, that is used to spin off the VM.
+	// So, to proceed with disk creation we locate OS image by its ID, extract corresponding
+	// SEP ID & pool name and write them into DiskConfig structures of the VM's data disks.
+	img_rec := &ImageRecord{
+		ID: machine.ImageID,
+	}
+	log.Printf("resourceVmCreate: calling utilityGetImageByID for Image ID %d", img_rec.ID)
+	err := controller.utilityGetImageByID(img_rec)
+	if err != nil {
+		return err
+	}
+
 	// boot disk list is a required argument and has only one element,
 	// which is of type diskSubresourceSchema
 	subres_list = d.Get("boot_disk").([]interface{})
 	subres_data = subres_list[0].(map[string]interface{})
 	machine.BootDisk.Label = subres_data["label"].(string)
 	machine.BootDisk.Size = subres_data["size"].(int)
-	machine.BootDisk.Pool = subres_data["pool"].(string)
-	machine.BootDisk.Provider = subres_data["provider"].(string)
+	machine.BootDisk.Pool = img_rec.Pool // subres_data["pool"].(string)     // TODO & NOTE: this is not passed to machine/create API in ver 1.0, but inherited from OS image
+	machine.BootDisk.SepId = img_rec.SepID // subres_data["sep_id"].(string)  // TODO & NOTE: this is not passed to machine/create API in ver 1.0, but inherited from OS image
 
-	
 	arg_value, arg_set = d.GetOk("data_disks")
 	if arg_set {
 		log.Printf("resourceVmCreate: calling makeDisksConfig")
@@ -87,7 +108,7 @@ func resourceVmCreate(d *schema.ResourceData, m interface{}) error {
 	// create basic VM (i.e. without port forwards and ext network connections - those will be done
 	// by separate API calls)
 	d.Partial(true)
-	controller := m.(*ControllerCfg)
+	
 	url_values := &url.Values{}
 	url_values.Add("cloudspaceId", fmt.Sprintf("%d", machine.ResGroupID))
 	url_values.Add("name", machine.Name)
@@ -118,7 +139,7 @@ func resourceVmCreate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("resourceVmCreate: new VM ID %d, name %q created", machine.ID, machine.Name)
 
 	if len(machine.DataDisks) > 0 || len(machine.PortForwards) > 0 {
-		// for data disk or port foreards provisioning we have to know Tenant ID
+		// for data disks' or port forwards' provisioning we have to know Tenant ID
 		// and Grid ID so we call utilityResgroupConfigGet method to populate these 
 		// fields in the machine structure that will be passed to provisionVmDisks or
 		// provisionVmPortforwards
@@ -137,16 +158,27 @@ func resourceVmCreate(d *schema.ResourceData, m interface{}) error {
 	// Configure data disks
 	disks_ok := true
 	if len(machine.DataDisks) > 0 {
-		log.Printf("resourceVmCreate: calling utilityVmDisksProvision for disk count %d", len(machine.DataDisks))
+		// 
+		log.Printf("resourceVmCreate: calling utilityVmDisksProvision for data disk count %d", len(machine.DataDisks))
+		log.Printf("resourceVmCreate: NOTE: SEP ID %d and pool %q are inherited from the OS image!", 
+		           img_rec.SepID, img_rec.Pool)
 		if machine.TenantID == 0 {
 			// if TenantID is still 0 it means that we failed to get Resgroup Facts by
 			// a previous call to utilityResgroupGetFacts,
 			// hence we do not have technical ability to provision data disks
 			disks_ok = false
 		} else {
-			// provisionVmDisks accomplishes two steps for each data disk specification
-			// 1) creates the disks
-			// 2) attaches them to the VM
+			// TODO: review the following hard-code for SEP ID and pool name after the advent of
+			// DECORT API ver 2.0 - it may be obsoleted then.
+			// See "NOTE on extra arguments to create disk" above to understand why we have 
+			// this "for" statement here prior to calling utilityVmDisksProvision
+			for index, _ := range machine.DataDisks {
+				machine.DataDisks[index].SepId = img_rec.SepID
+				machine.DataDisks[index].Pool = img_rec.Pool
+			}
+			// utilityVmDisksProvision accomplishes two steps for each data disk specification:
+			//  1) creates the disk
+			//  2) attaches it to the VM
 			err = controller.utilityVmDisksProvision(machine)
 			if err != nil {
 				disks_ok = false
@@ -182,8 +214,8 @@ func resourceVmCreate(d *schema.ResourceData, m interface{}) error {
 
 	//
 	// Configure external networks
-	// NOTE: currently only one external network can be attached to each VM, so in the current
-	// implementation we ignore all but the 1st network definition
+	// NOTE: currently (until new Resource Groups and Network mgm framework are implemented) only one external network
+	//  can be attached to each VM, so in the current implementation we ignore all but the 1st network definition.
 	nets_ok := true
 	if len(machine.Networks) > 0 {
 		log.Printf("resourceVmCreate: calling utilityVmNetworksProvision for networks count %d", len(machine.Networks))
@@ -287,6 +319,8 @@ func resourceVmRead(d *schema.ResourceData, m interface{}) error {
 func resourceVmUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("resourceVmUpdate: called for VM name %q, ResGroupID %d", 
 			   d.Get("name").(string), d.Get("rgid").(int))
+
+	log.Printf("resourceVmUpdate: method not implemented yet! No update is done.")
 			   
 	return resourceVmRead(d, m)
 }
@@ -402,9 +436,8 @@ func resourceVm() *schema.Resource {
 				Elem:        &schema.Resource {
 					Schema:  diskSubresourceSchema(),
 				},
-				Description: "Specification for data disks on this virtual machine.",
+				Description: "Specification for a data disk on this virtual machine. You can have up to 12 data disks attached to the VM.",
 			},
-
 			
 			"networks": {
 				Type:        schema.TypeList,
