@@ -119,6 +119,7 @@ type CloudspacesGetResp struct {
 	GridID int             `json:"gid"`
 	Location string        `json:"location"`
 	PublicIP string        `json:"publicipaddress"`
+	Ignored map[string]interface{} `json:"-"`
 }
 
 // 
