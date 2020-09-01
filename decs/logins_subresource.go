@@ -53,20 +53,22 @@ func loginsSubresourceSchema() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema {
 		"guid": {
 			Type:        schema.TypeString,
-			Computed:    true,
+			Optional:    true,
 			Default:     "",
 			Description: "GUID of this guest user.",
 		},
 
 		"login": {
 			Type:        schema.TypeString,
-			Computed:    true,
+			Optional:    true,
+			Default:     "",
 			Description: "Login name of this guest user.",
 		},
 
 		"password": {
 			Type:        schema.TypeString,
-			Computed:    true,
+			Optional:    true,
+			Default:     "",
 			Description: "Password of this guest user.",
 		},
 	}
