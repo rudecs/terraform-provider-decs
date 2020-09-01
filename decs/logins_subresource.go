@@ -19,7 +19,7 @@ package decs
 
 import (
 
-	// "log"
+	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	// "github.com/hashicorp/terraform/helper/validation"
@@ -36,12 +36,14 @@ func flattenGuestLogins(logins []GuestLoginRecord) []interface{} {
 	elem := make(map[string]interface{})
 
 	var subindex = 0
-	for _, value := range logins {
+	for index, value := range logins {
 		elem["guid"] = value.Guid
 		elem["login"] = value.Login
 		elem["password"] = value.Password
 		result[subindex] = elem
 		subindex += 1
+		log.Printf("flattenGuestLogins: parsed element %d - login %q", 
+		            index, value.Login)
 	}
 
 	return result
@@ -51,20 +53,20 @@ func loginsSubresourceSchema() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema {
 		"guid": {
 			Type:        schema.TypeString,
-			Optional:    true,
+			Computed:    true,
 			Default:     "",
 			Description: "GUID of this guest user.",
 		},
 
 		"login": {
 			Type:        schema.TypeString,
-			Required:    true,
+			Computed:    true,
 			Description: "Login name of this guest user.",
 		},
 
 		"password": {
 			Type:        schema.TypeString,
-			Required:    true,
+			Computed:    true,
 			Description: "Password of this guest user.",
 		},
 	}
