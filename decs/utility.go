@@ -33,5 +33,9 @@ func Jo2JSON(arg_str string) string {
 	ret_string = strings.Replace(ret_string, "True", "true", -1)
 	ret_string = strings.Replace(ret_string, "null", "\"\"", -1)
 	ret_string = strings.Replace(ret_string, "None", "\"\"", -1)
+
+	// fix for incorrect handling of usage info
+	ret_string = strings.Replace(ret_string, "<", "\"", -1)
+	ret_string = strings.Replace(ret_string, ">", "\"", -1)
 	return ret_string
 }
