@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2021 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,6 +73,13 @@ func flattenVm(d *schema.ResourceData, vm_facts string) error {
 		}
 		log.Printf("flattenVm: calling flattenNetworks")
 		if err = d.Set("networks", flattenNetworks(model.NICs)); err != nil {
+			return err
+		}
+	}
+
+	if len(model.GuestLogins) > 0 {
+		log.Printf("flattenVm: calling flattenGuestLogins")
+		if err = d.Set("guest_logins", flattenGuestLogins(model.GuestLogins)); err != nil {
 			return err
 		}
 	}
@@ -168,6 +175,15 @@ func dataSourceVm() *schema.Resource {
 					Schema:  diskSubresourceSchema(),
 				},
 				Description: "Specification for data disks on this virtual machine.",
+			},
+
+			"guest_logins": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Resource {
+					Schema:  loginsSubresourceSchema(),
+				},
+				Description: "Specification for guest logins on this virtual machine.",
 			},
 
 			"networks": {
