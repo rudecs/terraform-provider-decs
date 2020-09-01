@@ -130,7 +130,7 @@ func ControllerConfigure(d *schema.ResourceData) (*ControllerCfg, error) {
 	if allow_unverified_ssl {
 		log.Printf("ControllerConfigure: allow_unverified_ssl is set - will not check certificates!")
 		transCfg := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true},}
-		ret_config.cc_client := &http.Client{
+		ret_config.cc_client = &http.Client{
 			Transport: transCfg,
 			Timeout: Timeout180s,
 		}
