@@ -26,12 +26,7 @@ import (
 )
 
 func flattenGuestLogins(logins []GuestLoginRecord) []interface{} {
-	var length = 0
-
-	result := make([]interface{}, length)
-	if length == 0 {
-		return result
-	}
+	var result = make([]interface{}, len(logins))
 
 	elem := make(map[string]interface{})
 
