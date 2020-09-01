@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2021 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package decs
 import (
 
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -84,6 +85,9 @@ func ControllerConfigure(d *schema.ResourceData) (*ControllerCfg, error) {
 		decs_username:   "",
 	}
 
+	var allow_unverified_ssl bool
+	allow_unverified_ssl = d.Get("allow_unverified_ssl").(bool)
+
 	if ret_config.controller_url == "" {
 		return nil, fmt.Errorf("Empty DECS cloud controller URL provided.")
 	}
@@ -123,8 +127,18 @@ func ControllerConfigure(d *schema.ResourceData) (*ControllerCfg, error) {
 		return nil, fmt.Errorf("Unknown authenticator mode %q provided.", ret_config.auth_mode_txt)
 	}
 
-	ret_config.cc_client = &http.Client{
-		Timeout: Timeout180s, // time.Second * 30,
+	if allow_unverified_ssl {
+		log.Printf("ControllerConfigure: allow_unverified_ssl is set - will not check certificates!")
+		transCfg := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true},}
+		ret_config.cc_client := &http.Client{
+			Transport: transCfg,
+			Timeout: Timeout180s,
+		}
+	}
+	else {
+		ret_config.cc_client = &http.Client{
+			Timeout: Timeout180s, // time.Second * 30,
+		}
 	}
 
 	switch ret_config.auth_mode_code {

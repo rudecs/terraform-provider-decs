@@ -94,6 +94,7 @@ func Provider() *schema.Provider {
 			"allow_unverified_ssl": {
 				Type:        schema.TypeBool,
 				Optional:    true,
+				Default:     false,
 				Description: "If set, DECS API will allow unverifiable SSL certificates.",
 			},
 		},
