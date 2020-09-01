@@ -30,13 +30,11 @@ func flattenGuestLogins(logins []GuestLoginRecord) []interface{} {
 
 	elem := make(map[string]interface{})
 
-	var subindex = 0
 	for index, value := range logins {
 		elem["guid"] = value.Guid
 		elem["login"] = value.Login
 		elem["password"] = value.Password
-		result[subindex] = elem
-		subindex += 1
+		result[index] = elem
 		log.Printf("flattenGuestLogins: parsed element %d - login %q", 
 		            index, value.Login)
 	}
