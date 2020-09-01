@@ -29,8 +29,8 @@ func Jo2JSON(arg_str string) string {
 	// For Golang JSON Unmarshal to work properly we need to pre-process API response as follows:   
 	ret_string := strings.Replace(string(arg_str), "u'", "\"", -1)
 	ret_string = strings.Replace(ret_string, "'", "\"", -1)
-	ret_string = strings.Replace(ret_string, "False", "false", -1)
-	ret_string = strings.Replace(ret_string, "True", "true", -1)
+	ret_string = strings.Replace(ret_string, ": False", ": false", -1)
+	ret_string = strings.Replace(ret_string, ": True", ": true", -1)
 	ret_string = strings.Replace(ret_string, "null", "\"\"", -1)
 	ret_string = strings.Replace(ret_string, "None", "\"\"", -1)
 
