@@ -83,11 +83,13 @@ func flattenVm(d *schema.ResourceData, vm_facts string) error {
 		if err = d.Set("guest_logins", guest_logins); err != nil {
 			return err
 		}
+
+		default_login := guest_logins[0].(map[string]interface{})
 		// set user & password attributes to the corresponding values of the 1st item in the list
-		if err = d.Set("user", guest_logins[0]["user"]); err != nil {
+		if err = d.Set("user", default_login["user"]); err != nil {
 			return err
 		}
-		if err = d.Set("password", guest_logins[0]["password"]); err != nil {
+		if err = d.Set("password", default_login["password"]); err != nil {
 			return err
 		}
 	}
