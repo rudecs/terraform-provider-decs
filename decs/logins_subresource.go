@@ -19,10 +19,10 @@ package decs
 
 import (
 
-	"log"
+	// "log"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
+	// "github.com/hashicorp/terraform/helper/validation"
 )
 
 func flattenGuestLogins(logins []GuestLoginRecord) []interface{} {
