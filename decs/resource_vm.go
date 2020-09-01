@@ -405,6 +405,14 @@ func resourceVm() *schema.Resource {
 				Description: "Specification for data disks on this virtual machine.",
 			},
 
+			"guest_logins": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Resource {
+					Schema:  loginsSubresourceSchema(),
+				},
+				Description: "Specification for guest logins on this virtual machine.",
+			},
 			
 			"networks": {
 				Type:        schema.TypeList,
