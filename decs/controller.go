@@ -134,8 +134,7 @@ func ControllerConfigure(d *schema.ResourceData) (*ControllerCfg, error) {
 			Transport: transCfg,
 			Timeout: Timeout180s,
 		}
-	}
-	else {
+	} else {
 		ret_config.cc_client = &http.Client{
 			Timeout: Timeout180s, // time.Second * 30,
 		}
