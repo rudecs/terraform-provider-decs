@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2021 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -133,8 +133,8 @@ func utilityVmCheckPresence(d *schema.ResourceData, m interface{}) (string, erro
 	// log.Printf("%#v", vm_list)
 	// log.Printf("dataSourceVmRead: traversing decoded JSON of length %d", len(vm_list))
 	for _, item := range vm_list {
-		// need to match VM by name
-		if item.Name == name {
+		// need to match VM by name, skip VMs with the same name in DESTROYED satus
+		if item.Name == name && item.Status != "DESTROYED" {
 			// log.Printf("dataSourceVmRead: index %d, matched name %q", index, item.Name)
 			// we found the VM we need - not get detailed information via API call to cloudapi/machines/get
 			get_url_values := &url.Values{}
