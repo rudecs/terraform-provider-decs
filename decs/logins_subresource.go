@@ -62,6 +62,7 @@ func loginsSubresourceSchema() map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Default:     "",
+			Sensitive:   true,
 			Description: "Password of this guest user.",
 		},
 	}

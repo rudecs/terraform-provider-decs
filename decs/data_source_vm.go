@@ -79,7 +79,15 @@ func flattenVm(d *schema.ResourceData, vm_facts string) error {
 
 	if len(model.GuestLogins) > 0 {
 		log.Printf("flattenVm: calling flattenGuestLogins")
-		if err = d.Set("guest_logins", flattenGuestLogins(model.GuestLogins)); err != nil {
+		guest_logins := flattenGuestLogins(model.GuestLogins)
+		if err = d.Set("guest_logins", guest_logins); err != nil {
+			return err
+		}
+		// set user & password attributes to the corresponding values of the 1st item in the list
+		if err = d.Set("user", guest_logins[0]["user"]); err != nil {
+			return err
+		}
+		if err = d.Set("password", guest_logins[0]["password"]); err != nil {
 			return err
 		}
 	}
@@ -208,6 +216,19 @@ func dataSourceVm() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Description of this virtual machine.",
+			},
+
+			"user": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Default login name for the guest OS on this virtual machine.",
+			},
+
+			"password": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Sensitive:   true,
+				Description: "Default password for the guest OS login on this virtual machine.",
 			},
 
 		},
